@@ -150,6 +150,10 @@ if df is not None:
             with open("cotizacion.pdf", "rb") as f:
                 st.download_button("⬇️ Descargar PDF", f, file_name="cotizacion_tabancura.pdf")
     else:
-        st.info("Seleccione exámenes para cotizar.")
+        st.info("Seleccione exámenes para cotizar. " \
+        "Sólo se puede manejar los examenes con fonasa B-C-D." \
+        "Valor sujeto a a confirmación en la sucursal respectiva." \
+        "Este presupuesto tiene una validez de 30 días." \
+        "")
 else:
     st.error("Archivo 'aranceles.xlsx' no encontrado.")
