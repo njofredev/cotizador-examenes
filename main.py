@@ -49,7 +49,7 @@ df = cargar_datos()
 
 # 3. INTERFAZ DE USUARIO
 if os.path.exists("logo.png"):
-    st.image("logo.png", width=200)
+    st.image("logo.png")
 
 st.title("Cotizador de Exámenes")
 
@@ -59,10 +59,15 @@ if df is not None:
     col_p1, col_p2, col_p3 = st.columns(3)
     nombre_p = col_p1.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez")
     rut_p = col_p2.text_input("RUT:", placeholder="12.345.678-9")
-    fecha_nac = col_p3.date_input("Fecha de Nacimiento:", 
-                                 value=date(1990, 1, 1),
-                                 min_value=date(1900, 1, 1),
-                                 max_value=date.today())
+    
+    # Fecha de nacimiento con formato estándar de selección
+    fecha_nac = col_p3.date_input(
+        "Fecha de Nacimiento:", 
+        value=date(1990, 1, 1),
+        min_value=date(1900, 1, 1),
+        max_value=date.today(),
+        format="DD/MM/YYYY"  # Esto cambia la visualización en el widget
+    )
 
     # Buscador Multiselect
     seleccionados = st.multiselect(
@@ -91,7 +96,6 @@ if df is not None:
 
         # 4. GENERACIÓN DE PDF VERTICAL
         if st.button("Generar Cotización en PDF"):
-            # 'P' para Portrait (Vertical)
             pdf = FPDF(orientation='P', unit='mm', format='A4')
             pdf.add_page()
             
@@ -103,7 +107,7 @@ if df is not None:
             pdf.cell(0, 10, "COTIZACIÓN DE EXÁMENES", ln=True, align='C')
             pdf.ln(3)
 
-            # Datos Paciente en el PDF
+            # Datos Paciente en el PDF (Formato DD/MM/YYYY)
             pdf.set_font("Arial", '', 10)
             pdf.cell(0, 6, f"Paciente: {nombre_p if nombre_p else '____________________'}", ln=True)
             pdf.cell(0, 6, f"RUT: {rut_p if rut_p else '____________________'}", ln=True)
@@ -111,16 +115,15 @@ if df is not None:
             pdf.cell(0, 6, f"Fecha Cotización: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
             pdf.ln(6)
 
-            # --- CABECERA AGRUPADA (AJUSTADA A 190mm de ancho total) ---
+            # --- CABECERA AGRUPADA ---
             pdf.set_fill_color(15, 143, 238)
             pdf.set_text_color(255, 255, 255)
             pdf.set_font("Arial", 'B', 9)
             
-            # Anchos de columna: Cod(18), Nom(52), Fonasa(30), Copago(30), PartG(30), PartP(30) = 190mm
             pdf.cell(18, 10, "", 0, 0) 
             pdf.cell(52, 10, "", 0, 0)
-            pdf.cell(60, 10, "Bono Fonasa", 1, 0, 'C', True) # 30 + 30
-            pdf.cell(60, 10, "Particular", 1, 1, 'C', True)   # 30 + 30
+            pdf.cell(60, 10, "Bono Fonasa", 1, 0, 'C', True)
+            pdf.cell(60, 10, "Particular", 1, 1, 'C', True)
 
             # Sub-cabeceras
             pdf.set_font("Arial", 'B', 7)
@@ -136,7 +139,6 @@ if df is not None:
             pdf.set_font("Arial", '', 7)
             for _, row in df_sel.iterrows():
                 pdf.cell(18, 8, str(row['Código']), 1, 0, 'C')
-                # Truncar nombre para que quepa en el ancho vertical
                 pdf.cell(52, 8, f" {str(row['Nombre'])[:35]}", 1, 0, 'L')
                 pdf.cell(30, 8, f"${row['Valor bono Fonasa']:,.0f}", 1, 0, 'R')
                 pdf.cell(30, 8, f"${row['Valor copago']:,.0f}", 1, 0, 'R')
@@ -155,18 +157,18 @@ if df is not None:
             # Footer
             pdf.ln(10)
             pdf.set_font("Arial", 'I', 7)
-            nota = ("Nota: Valores sujetos a confirmación en sucursal. "
-                    "Este presupuesto tiene una validez de 30 días. "
-                    "Solo se manejan tramos Fonasa B, C y D.")
-            pdf.multi_cell(0, 5, nota)
+            pdf.multi_cell(0, 5, "Nota: Valores sujetos a confirmación en sucursal. Este presupuesto tiene una validez de 30 días. Solo se manejan tramos Fonasa B, C y D.")
 
             # Descarga
-            nombre_archivo = "cotizacion_vertical.pdf"
+            nombre_archivo = "cotizacion.pdf"
             pdf.output(nombre_archivo)
             with open(nombre_archivo, "rb") as f:
-                st.download_button("⬇️ Descargar PDF Vertical", f, 
-                                 file_name=f"Cotizacion_{nombre_p}.pdf", 
-                                 mime="application/pdf")
+                st.download_button(
+                    "⬇️ Descargar PDF", 
+                    f, 
+                    file_name=f"Cotizacion_{nombre_p}_{pd.Timestamp.now().strftime('%d-%m-%Y')}.pdf", 
+                    mime="application/pdf"
+                )
     else:
         st.info("Seleccione exámenes para cotizar.")
 else:
