@@ -63,7 +63,7 @@ def cargar_datos():
 df = cargar_datos()
 
 if os.path.exists("logo.png"):
-    st.image("logo.png", width=200)
+    st.image("logo.png")
 
 st.title("Cotizador de Exámenes")
 
