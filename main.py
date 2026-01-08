@@ -4,7 +4,7 @@ from fpdf import FPDF
 import os
 
 # 1. CONFIGURACIÓN DE PÁGINA
-st.set_page_config(page_title="Cotizador Tabancura", page_icon="🏥", layout="wide")
+st.set_page_config(page_title="Cotiza tu examen", page_icon="🏥", layout="wide")
 
 # --- ESTILO CSS PARA EL COLOR AZUL #0f8fee ---
 st.markdown(f"""
