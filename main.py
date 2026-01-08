@@ -65,23 +65,14 @@ df = cargar_datos()
 
 # 3. INTERFAZ DE USUARIO
 if os.path.exists("logo.png"):
-    st.image("logo.png")
+    st.image("logo.png", width=200) # Se añade ancho para mejor visualización
 
 st.title("Cotizador de Exámenes")
-
-# Botón Limpiar Formulario (Lógica corregida para evitar el error de rerun)
-col_title, col_clear = st.columns([0.85, 0.15])
-with col_clear:
-    if st.button("🗑️ Limpiar Formulario"):
-        for key in st.session_state.keys():
-            del st.session_state[key]
-        st.rerun()
 
 if df is not None:
     st.subheader("Datos del Paciente")
     col_p1, col_p2, col_p3 = st.columns(3)
     
-    # Asignamos llaves (keys) para que puedan ser reseteadas por el botón de limpieza
     nombre_p = col_p1.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez", key="nombre_key")
     rut_p = col_p2.text_input("RUT:", placeholder="12.345.678-9", key="rut_key")
     fecha_nac = col_p3.date_input("Fecha de Nacimiento:", value=date(1990, 1, 1), format="DD/MM/YYYY", key="fecha_key")
@@ -99,7 +90,6 @@ if df is not None:
         
         st.write("### Detalle de Cotización")
         
-        # Mostramos la tabla simple sin super-cabezales en la web
         df_web = df_sel.drop(columns=["busqueda"])
         st.table(df_web.style.format({
             "Valor bono Fonasa": "${:,.0f}",
@@ -146,7 +136,7 @@ if df is not None:
             pdf.cell(0, 6, f"Fecha Cotización: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
             pdf.ln(6)
 
-            # --- CABECERA PDF CON SUPER-CABEZALES ---
+            # --- CABECERA PDF ---
             pdf.set_fill_color(15, 143, 238)
             pdf.set_text_color(255, 255, 255)
             pdf.set_font("Arial", 'B', 9)
@@ -156,7 +146,6 @@ if df is not None:
             pdf.cell(60, 10, "Bono Fonasa", 1, 0, 'C', True)
             pdf.cell(60, 10, "Arancel particular", 1, 1, 'C', True)
 
-            # Fila de columnas secundaria
             pdf.set_font("Arial", 'B', 7)
             pdf.cell(18, 10, "Código", 1, 0, 'C', True)
             pdf.cell(52, 10, " Nombre", 1, 0, 'L', True)
@@ -206,5 +195,18 @@ if df is not None:
             )
             pdf.multi_cell(0, 4, notas_texto)
 
-            # Descarga del archivo
+            # GUARDAR Y MOSTRAR BOTÓN DE DESCARGA
             nombre_pdf = f"Cotizacion_{codigo_folio}.pdf"
+            pdf.output(nombre_pdf)
+            
+            with open(nombre_pdf, "rb") as f:
+                st.download_button(
+                    label="🔵 Descargar PDF Cotización",
+                    data=f,
+                    file_name=f"Cotizacion_{nombre_p}_{codigo_folio}.pdf",
+                    mime="application/pdf"
+                )
+    else:
+        st.info("Seleccione exámenes para comenzar la cotización.")
+else:
+    st.error("Archivo 'aranceles.xlsx' no encontrado.")
