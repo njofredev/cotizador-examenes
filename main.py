@@ -27,9 +27,22 @@ st.markdown(f"""
     .stButton>button {{
         background-color: #0f8fee;
         color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }}
+    .stButton>button:hover {{
+        background-color: #0d79ca !important;
+        color: white !important;
+        border: none !important;
     }}
     </style>
     """, unsafe_allow_html=True)
+
+# FUNCIÓN PARA REINICIAR TODO
+def limpiar_todo():
+    for key in st.session_state.keys():
+        del st.session_state[key]
+    st.rerun()
 
 def generar_folio():
     caracteres = string.ascii_uppercase + string.digits
@@ -60,30 +73,33 @@ if os.path.exists("logo.png"):
 
 st.title("Cotizador de Exámenes")
 
-# Botón Limpiar en la parte superior derecha
+# Botón Limpiar con función de reset completa
 col_title, col_clear = st.columns([0.85, 0.15])
 with col_clear:
-    if st.button("🗑️ Limpiar Formulario"):
-        st.rerun()
+    if st.button("🗑️ Limpiar Formulario", on_click=limpiar_todo):
+        pass
 
 if df is not None:
     st.subheader("Datos del Paciente")
     col_p1, col_p2, col_p3 = st.columns(3)
-    nombre_p = col_p1.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez")
-    rut_p = col_p2.text_input("RUT:", placeholder="12.345.678-9")
-    fecha_nac = col_p3.date_input("Fecha de Nacimiento:", value=date(1990, 1, 1), format="DD/MM/YYYY")
+    
+    # Usamos keys para que el botón de limpiar pueda resetearlos
+    nombre_p = col_p1.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez", key="nombre")
+    rut_p = col_p2.text_input("RUT:", placeholder="12.345.678-9", key="rut")
+    fecha_nac = col_p3.date_input("Fecha de Nacimiento:", value=date(1990, 1, 1), format="DD/MM/YYYY", key="fecha")
 
+    # Multiselect con KEY para poder limpiarlo
     seleccionados = st.multiselect(
         "Busque y seleccione los exámenes:",
         options=df["busqueda"].unique().tolist(),
-        placeholder="Escriba aquí..."
+        placeholder="Escriba aquí...",
+        key="busqueda_key"
     )
 
     if seleccionados:
         df_sel = df[df["busqueda"].isin(seleccionados)].copy()
         
         st.write("### Detalle de Cotización")
-        # Mostramos tabla simple sin supercabezales como solicitaste
         df_web = df_sel.drop(columns=["busqueda"])
         st.table(df_web.style.format({
             "Valor bono Fonasa": "${:,.0f}",
@@ -129,27 +145,22 @@ if df is not None:
             pdf.cell(0, 6, f"Fecha Cotización: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
             pdf.ln(6)
 
-            # --- CABECERA PDF ---
+            # Cabecera PDF
             pdf.set_fill_color(15, 143, 238)
             pdf.set_text_color(255, 255, 255)
             pdf.set_font("Arial", 'B', 9)
-            
-            # Supercabezales
-            pdf.cell(18, 10, "", 0, 0) 
-            pdf.cell(52, 10, "", 0, 0)
+            pdf.cell(18, 10, "", 0, 0); pdf.cell(52, 10, "", 0, 0)
             pdf.cell(60, 10, "Bono Fonasa", 1, 0, 'C', True)
-            pdf.cell(60, 10, "Arancel particular", 1, 1, 'C', True) # CAMBIO SOLICITADO
+            pdf.cell(60, 10, "Arancel particular", 1, 1, 'C', True)
 
-            # Sub-cabeceras (CAMBIOS DE NOMBRES SOLICITADOS)
             pdf.set_font("Arial", 'B', 7)
             pdf.cell(18, 10, "Código", 1, 0, 'C', True)
             pdf.cell(52, 10, " Nombre", 1, 0, 'L', True)
             pdf.cell(30, 10, "Valor Bono", 1, 0, 'C', True)
-            pdf.cell(30, 10, "Valor a pagar(*)", 1, 0, 'C', True) # CAMBIO
-            pdf.cell(30, 10, "Valor general", 1, 0, 'C', True) # CAMBIO
-            pdf.cell(30, 10, "Valor preferencial", 1, 1, 'C', True) # CAMBIO
+            pdf.cell(30, 10, "Valor a pagar(*)", 1, 0, 'C', True) 
+            pdf.cell(30, 10, "Valor general", 1, 0, 'C', True) 
+            pdf.cell(30, 10, "Valor preferencial", 1, 1, 'C', True)
 
-            # Filas
             pdf.set_text_color(0, 0, 0)
             pdf.set_font("Arial", '', 7)
             for _, row in df_sel.iterrows():
@@ -162,7 +173,6 @@ if df is not None:
                 pdf.cell(30, 8, f"${row['Valor particular General']:,.0f}", 1, 0, 'R')
                 pdf.cell(30, 8, f"${row['Valor particular preferencial']:,.0f}", 1, 1, 'R')
 
-            # Totales
             pdf.set_font("Arial", 'B', 7)
             pdf.set_fill_color(240, 240, 240)
             pdf.cell(70, 10, " TOTALES ACUMULADOS", 1, 0, 'L', True)
@@ -177,6 +187,7 @@ if df is not None:
             pdf.set_font("Arial", '', 7)
             notas_texto = (
                 f"- Folio único de atención: {codigo_folio}\n"
+                "- (*) Este valor no considera seguros complementarios.\n"
                 "- Horario de atención de la toma de muestras: Lun- Vier desde las 08:30am a las 11:00am.\n"
                 "- Ayuno no puede superar las 12hrs.\n"
                 "- Para pruebas PTGO, SÓLO se puede tomar agendando a las 08:30am.\n"
@@ -184,7 +195,6 @@ if df is not None:
                 "- Las horas de ayuno dependen del examen.\n"
                 "- Existen exámenes sin necesidad de ayuno.\n"
                 "- Consultar por los plazos de entregas individuales de cada examen.\n"
-                "(*)Este valor no considera seguros complementarios.\n"
                 "- Esta cotización tiene una validez de 30 días. Valores sujetos a confirmación en sucursal."
             )
             pdf.multi_cell(0, 4, notas_texto)
