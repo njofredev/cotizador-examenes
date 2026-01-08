@@ -10,6 +10,7 @@ import locale
 # 1. CONFIGURACIÓN DE PÁGINA E IDIOMA
 st.set_page_config(page_title="Cotiza tu examen", page_icon="🏥", layout="wide")
 
+# Configuración de idioma para que el calendario aparezca en español
 try:
     locale.setlocale(locale.LC_ALL, 'es_CL.UTF-8') 
 except:
@@ -18,7 +19,7 @@ except:
     except:
         pass
 
-# --- ESTILO CSS ---
+# --- ESTILO CSS PARA BOTONES Y HOVER ---
 st.markdown(f"""
     <style>
     span[data-baseweb="tag"] {{
@@ -38,6 +39,7 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
+# Función para generar el Folio Único
 def generar_folio():
     caracteres = string.ascii_uppercase + string.digits
     return ''.join(secrets.choice(caracteres) for i in range(8))
@@ -67,25 +69,37 @@ if os.path.exists("logo.png"):
 
 st.title("Cotizador de Exámenes")
 
+# Botón Limpiar Formulario (Lógica corregida para evitar el error de rerun)
+col_title, col_clear = st.columns([0.85, 0.15])
+with col_clear:
+    if st.button("🗑️ Limpiar Formulario"):
+        for key in st.session_state.keys():
+            del st.session_state[key]
+        st.rerun()
+
 if df is not None:
     st.subheader("Datos del Paciente")
     col_p1, col_p2, col_p3 = st.columns(3)
-    nombre_p = col_p1.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez")
-    rut_p = col_p2.text_input("RUT:", placeholder="12.345.678-9")
-    fecha_nac = col_p3.date_input("Fecha de Nacimiento:", value=date(1990, 1, 1), format="DD/MM/YYYY")
+    
+    # Asignamos llaves (keys) para que puedan ser reseteadas por el botón de limpieza
+    nombre_p = col_p1.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez", key="nombre_key")
+    rut_p = col_p2.text_input("RUT:", placeholder="12.345.678-9", key="rut_key")
+    fecha_nac = col_p3.date_input("Fecha de Nacimiento:", value=date(1990, 1, 1), format="DD/MM/YYYY", key="fecha_key")
 
-    # USAMOS UN EXPANDER PARA QUE EL USUARIO PUEDA "CERRAR" LA BÚSQUEDA
-    with st.expander("🔍 PASO 1: Seleccione los exámenes aquí (Cierre al terminar)", expanded=True):
-        seleccionados = st.multiselect(
-            "Escriba el nombre o código:",
-            options=df["busqueda"].unique().tolist(),
-            placeholder="Seleccione uno o varios..."
-        )
+    # Buscador de exámenes
+    seleccionados = st.multiselect(
+        "Busque y seleccione los exámenes:",
+        options=df["busqueda"].unique().tolist(),
+        placeholder="Escriba aquí el nombre o código...",
+        key="examenes_key"
+    )
 
     if seleccionados:
         df_sel = df[df["busqueda"].isin(seleccionados)].copy()
         
-        st.write("### PASO 2: Detalle de Cotización")
+        st.write("### Detalle de Cotización")
+        
+        # Mostramos la tabla simple sin super-cabezales en la web
         df_web = df_sel.drop(columns=["busqueda"])
         st.table(df_web.style.format({
             "Valor bono Fonasa": "${:,.0f}",
@@ -94,6 +108,7 @@ if df is not None:
             "Valor particular preferencial": "${:,.0f}"
         }))
         
+        # Cálculo de totales
         tot_f = df_sel["Valor bono Fonasa"].sum()
         tot_c = df_sel["Valor copago"].sum()
         tot_pg = df_sel["Valor particular General"].sum()
@@ -101,18 +116,12 @@ if df is not None:
 
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Total Fonasa", f"${tot_f:,.0f}")
-        m1.caption("Valor Bono")
         m2.metric("Total Copago", f"${tot_c:,.0f}")
-        m2.caption("Valor a pagar")
         m3.metric("Total Part. Gral", f"${tot_pg:,.0f}")
-        m3.caption("Valor general")
         m4.metric("Total Part. Pref", f"${tot_pp:,.0f}")
-        m4.caption("Valor preferencial")
-
-        st.markdown("---")
 
         # 4. GENERACIÓN DE PDF
-        if st.button("📄 PASO 3: Generar Cotización en PDF"):
+        if st.button("Generar Cotización en PDF"):
             codigo_folio = generar_folio()
             pdf = FPDF(orientation='P', unit='mm', format='A4')
             pdf.add_page()
@@ -127,7 +136,7 @@ if df is not None:
 
             pdf.ln(10)
             pdf.set_font("Arial", 'B', 14)
-            pdf.cell(0, 10, "Exámenes de laboratorio", ln=True, align='C')
+            pdf.cell(0, 10, "Exámenes de Laboratorio", ln=True, align='C')
             pdf.ln(3)
 
             pdf.set_font("Arial", '', 10)
@@ -137,18 +146,17 @@ if df is not None:
             pdf.cell(0, 6, f"Fecha Cotización: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
             pdf.ln(6)
 
-            # --- CABECERA PDF ---
+            # --- CABECERA PDF CON SUPER-CABEZALES ---
             pdf.set_fill_color(15, 143, 238)
             pdf.set_text_color(255, 255, 255)
             pdf.set_font("Arial", 'B', 9)
             
-            # Supercabezales
             pdf.cell(18, 10, "", 0, 0) 
             pdf.cell(52, 10, "", 0, 0)
             pdf.cell(60, 10, "Bono Fonasa", 1, 0, 'C', True)
             pdf.cell(60, 10, "Arancel particular", 1, 1, 'C', True)
 
-            # Sub-cabeceras
+            # Fila de columnas secundaria
             pdf.set_font("Arial", 'B', 7)
             pdf.cell(18, 10, "Código", 1, 0, 'C', True)
             pdf.cell(52, 10, " Nombre", 1, 0, 'L', True)
@@ -157,7 +165,7 @@ if df is not None:
             pdf.cell(30, 10, "Valor general", 1, 0, 'C', True) 
             pdf.cell(30, 10, "Valor preferencial", 1, 1, 'C', True)
 
-            # Filas
+            # Filas de datos
             pdf.set_text_color(0, 0, 0)
             pdf.set_font("Arial", '', 7)
             for _, row in df_sel.iterrows():
@@ -170,7 +178,7 @@ if df is not None:
                 pdf.cell(30, 8, f"${row['Valor particular General']:,.0f}", 1, 0, 'R')
                 pdf.cell(30, 8, f"${row['Valor particular preferencial']:,.0f}", 1, 1, 'R')
 
-            # Totales
+            # Fila de Totales
             pdf.set_font("Arial", 'B', 7)
             pdf.set_fill_color(240, 240, 240)
             pdf.cell(70, 10, " TOTALES ACUMULADOS", 1, 0, 'L', True)
@@ -179,6 +187,7 @@ if df is not None:
             pdf.cell(30, 10, f"${tot_pg:,.0f}", 1, 0, 'R', True)
             pdf.cell(30, 10, f"${tot_pp:,.0f}", 1, 1, 'R', True)
 
+            # --- PIE DE PÁGINA ---
             pdf.ln(10)
             pdf.set_font("Arial", 'B', 8)
             pdf.cell(0, 5, "INFORMACIÓN IMPORTANTE:", ln=True)
@@ -197,12 +206,5 @@ if df is not None:
             )
             pdf.multi_cell(0, 4, notas_texto)
 
-            # Generar archivo
-            nombre_archivo = "cotizacion_final.pdf"
-            pdf.output(nombre_archivo)
-            with open(nombre_archivo, "rb") as f:
-                st.download_button("⬇️ Descargar PDF", f, file_name=f"Cotizacion_{codigo_folio}.pdf")
-    else:
-        st.info("Utilice el panel de arriba para buscar y seleccionar exámenes.")
-else:
-    st.error("Archivo 'aranceles.xlsx' no encontrado.")
+            # Descarga del archivo
+            nombre_pdf = f"Cotizacion_{codigo_folio}.pdf"
