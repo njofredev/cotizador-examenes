@@ -65,7 +65,7 @@ df = cargar_datos()
 
 # 3. INTERFAZ DE USUARIO
 if os.path.exists("logo.png"):
-    st.image("logo.png", width=200) # Se añade ancho para mejor visualización
+    st.image("logo.png") # Se añade ancho para mejor visualización
 
 st.title("Cotizador de Exámenes")
 
