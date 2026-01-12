@@ -4,13 +4,8 @@ from fpdf import FPDF
 import os
 import psycopg2
 from datetime import datetime
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
 
-# --- 1. CONFIGURACIÓN Y CONEXIÓN ---
+# --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Cotizador Policlínico Tabancura", page_icon="🏥", layout="wide")
 
 def conectar_db():
@@ -18,15 +13,25 @@ def conectar_db():
     if not host:
         try:
             db_conf = st.secrets["postgres"]
-            host, database, user, password, port = db_conf["host"], db_conf["database"], db_conf["user"], db_conf["password"], db_conf["port"]
+            host = db_conf["host"]
+            database = db_conf["database"]
+            user = db_conf["user"]
+            password = db_conf["password"]
+            port = db_conf["port"]
         except:
-            st.error("❌ Error de configuración: Faltan variables de entorno.")
+            st.error("❌ No hay variables de entorno configuradas.")
             return None
     else:
-        database, user, password, port = os.getenv("POSTGRES_DATABASE"), os.getenv("POSTGRES_USER"), os.getenv("POSTGRES_PASSWORD"), os.getenv("POSTGRES_PORT")
+        database = os.getenv("POSTGRES_DATABASE")
+        user = os.getenv("POSTGRES_USER")
+        password = os.getenv("POSTGRES_PASSWORD")
+        port = os.getenv("POSTGRES_PORT")
 
     try:
-        return psycopg2.connect(host=host, database=database, user=user, password=password, port=port, sslmode="require")
+        return psycopg2.connect(
+            host=host, database=database, user=user, 
+            password=password, port=port, sslmode="require"
+        )
     except Exception as e:
         st.error(f"❌ Error de conexión: {e}")
         return None
@@ -37,165 +42,92 @@ def cargar_aranceles():
         st.error("❌ Archivo 'aranceles.xlsx' no encontrado.")
         return None
     df = pd.read_excel("aranceles.xlsx")
-    # Ajustamos nombres de columnas según tu archivo
+    # Ajuste de nombres de columnas según tu Excel
     df.columns = ["Código", "Nombre", "Fonasa", "Copago", "Particular_Gral", "Particular_Pref"]
     df["Código"] = df["Código"].astype(str).str.replace(".0", "", regex=False)
     return df
 
-# --- 2. FUNCIONES DE LÓGICA (PDF Y EMAIL) ---
+# --- 2. INTERFAZ ---
+st.title("Cotizador de Exámenes")
+st.subheader("Policlínico Tabancura")
 
-def generar_pdf(nombre, rut, fecha_nac, email, examenes_df, folio):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, "COTIZACIÓN DE EXÁMENES - POLICLÍNICO TABANCURA", ln=True, align='C')
-    
-    pdf.set_font("Arial", '', 12)
-    pdf.ln(10)
-    pdf.cell(200, 10, f"Folio: {folio}", ln=True)
-    pdf.cell(200, 10, f"Paciente: {nombre} | RUT: {rut}", ln=True)
-    pdf.cell(200, 10, f"Fecha Nacimiento: {fecha_nac}", ln=True)
-    pdf.cell(200, 10, f"Email: {email}", ln=True)
-    pdf.cell(200, 10, f"Fecha Emisión: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
-    pdf.ln(10)
-
-    # Cabecera de tabla
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(30, 10, "Código", 1)
-    pdf.cell(100, 10, "Examen", 1)
-    pdf.cell(40, 10, "Precio (Part.)", 1)
-    pdf.ln()
-
-    # Contenido de tabla
-    pdf.set_font("Arial", '', 10)
-    total = 0
-    for _, row in examenes_df.iterrows():
-        pdf.cell(30, 10, str(row['Código']), 1)
-        pdf.cell(100, 10, str(row['Nombre'])[:50], 1)
-        pdf.cell(40, 10, f"${row['Particular_Gral']:,.0f}", 1)
-        total += row['Particular_Gral']
-        pdf.ln()
-
-    pdf.ln(5)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, f"TOTAL A PAGAR: ${total:,.0f}", ln=True, align='R')
-    
-    filename = f"cotizacion_{folio}.pdf"
-    pdf.output(filename)
-    return filename
-
-def enviar_correo(destinatario, archivo_pdf, nombre_paciente):
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_pass = os.getenv("SMTP_PASS")
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_port = int(os.getenv("SMTP_PORT", 465))
-    
-    msg = MIMEMultipart()
-    msg['From'] = smtp_user
-    msg['To'] = destinatario
-    msg['Subject'] = f"Tu Cotización Médica - Policlínico Tabancura"
-
-    body = f"Hola {nombre_paciente},\n\nAdjuntamos la cotización de exámenes solicitada en Policlínico Tabancura.\n\nAtentamente,\nEquipo Policlínico Tabancura."
-    msg.attach(MIMEText(body, 'plain'))
-
-    with open(archivo_pdf, "rb") as f:
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(f.read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f"attachment; filename={archivo_pdf}")
-        msg.attach(part)
-
-    try:
-        # USAMOS SMTP_SSL PARA PUERTO 465
-        server = smtplib.SMTP_SSL(smtp_host, smtp_port)
-        server.login(smtp_user, smtp_pass)
-        server.send_message(msg)
-        server.quit()
-        return True
-    except Exception as e:
-        st.error(f"Error al enviar email: {e}")
-        return False
-
-# --- 3. INTERFAZ DE USUARIO ---
-
-tab1, tab2 = st.tabs(["🆕 Nueva Cotización", "🔍 Buscar Folio"])
-
-with tab1:
-    st.header("Generar Nueva Cotización")
+# Formulario de paciente
+with st.expander("Datos del Paciente", expanded=True):
     col1, col2 = st.columns(2)
     with col1:
-        nombre_pax = st.text_input("Nombre Completo")
-        rut_pax = st.text_input("RUT (ej: 12.345.678-9)")
+        nombre = st.text_input("Nombre Completo")
+        rut = st.text_input("RUT")
     with col2:
-        fecha_nac_pax = st.date_input("Fecha de Nacimiento", min_value=datetime(1920,1,1))
-        email_pax = st.text_input("Correo Electrónico del Paciente")
+        fecha_nac = st.date_input("Fecha de Nacimiento", min_value=datetime(1920, 1, 1))
 
-    aranceles = cargar_aranceles()
-    if aranceles is not None:
-        seleccion = st.multiselect("Busque y seleccione los exámenes:", aranceles["Nombre"].tolist())
-        df_seleccionados = aranceles[aranceles["Nombre"].isin(seleccion)]
+# Selección de exámenes
+aranceles = cargar_aranceles()
+
+if aranceles is not None:
+    examenes_nombres = aranceles["Nombre"].tolist()
+    seleccionados = st.multiselect("Seleccione los exámenes a cotizar:", examenes_nombres)
+    
+    df_seleccionados = aranceles[aranceles["Nombre"].isin(seleccionados)]
+    
+    if not df_seleccionados.empty:
+        st.write("### Resumen de Cotización")
+        st.table(df_seleccionados[["Código", "Nombre", "Particular_Gral"]])
         
-        if not df_seleccionados.empty:
-            st.table(df_seleccionados[["Código", "Nombre", "Particular_Gral"]])
-            
-            if st.button("Finalizar, Guardar y Enviar"):
-                if not email_pax or "@" not in email_pax or not nombre_pax:
-                    st.warning("⚠️ Complete todos los campos y asegúrese de que el correo sea válido.")
-                else:
-                    conn = conectar_db()
-                    if conn:
-                        try:
-                            cur = conn.cursor()
-                            folio_gen = f"COT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-                            
-                            # 1. Guardar en tabla Maestra
-                            cur.execute("""
-                                INSERT INTO cotizaciones (folio, rut, nombre, fecha_nacimiento, email, fecha_creacion) 
-                                VALUES (%s, %s, %s, %s, %s, %s)
-                                """, (folio_gen, rut_pax, nombre_pax, fecha_nac_pax, email_pax, datetime.now()))
-                            
-                            # 2. Guardar en Detalle
-                            for cod in df_seleccionados["Código"]:
-                                cur.execute("INSERT INTO detalle_cotizaciones (folio_cotizacion, codigo_examen) VALUES (%s, %s)", (folio_gen, cod))
-                            
-                            conn.commit()
-                            
-                            # 3. PDF y Email
-                            with st.spinner("Generando documento y enviando correo..."):
-                                pdf_path = generar_pdf(nombre_pax, rut_pax, str(fecha_nac_pax), email_pax, df_seleccionados, folio_gen)
-                                if enviar_correo(email_pax, pdf_path, nombre_pax):
-                                    st.success(f"✅ ¡Folio {folio_gen} enviado con éxito a {email_pax}!")
-                                    with open(pdf_path, "rb") as f:
-                                        st.download_button("Descargar Copia PDF", f, file_name=pdf_path)
-                            
-                            cur.close()
-                            conn.close()
-                        except Exception as e:
-                            st.error(f"Error en la base de datos: {e}")
+        total = df_seleccionados["Particular_Gral"].sum()
+        st.metric("Total a Pagar (Particular)", f"${total:,.0f}")
 
-with tab2:
-    st.header("Revisión de Cotizaciones")
-    folio_input = st.text_input("Ingrese Folio a buscar (ej: COT-2024...):").upper().strip()
-
-    if st.button("Buscar en Base de Datos"):
-        conn = conectar_db()
-        if conn:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM cotizaciones WHERE folio = %s", (folio_input,))
-            maestro = cur.fetchone()
-            
-            if maestro:
-                st.info(f"📍 Cotización encontrada")
-                st.write(f"**Paciente:** {maestro[2]} | **RUT:** {maestro[1]}")
-                st.write(f"**Email registrado:** {maestro[5]}") # Asumiendo que email es la col 5
-                
-                cur.execute("SELECT codigo_examen FROM detalle_cotizaciones WHERE folio_cotizacion = %s", (folio_input,))
-                codigos = [r[0] for r in cur.fetchall()]
-                
-                aranceles = cargar_aranceles()
-                df_res = aranceles[aranceles["Código"].isin(codigos)]
-                st.table(df_res[["Código", "Nombre", "Particular_Gral"]])
-            else:
-                st.error("❌ El folio ingresado no existe.")
-            cur.close()
-            conn.close()
+        if st.button("Guardar y Generar PDF"):
+            conn = conectar_db()
+            if conn:
+                try:
+                    cur = conn.cursor()
+                    # Generar un Folio Simple
+                    folio_gen = f"COT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                    
+                    # 1. Guardar en la tabla cotizaciones
+                    cur.execute("""
+                        INSERT INTO cotizaciones (folio, rut, nombre, fecha_nacimiento, fecha_creacion)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (folio_gen, rut, nombre, fecha_nac, datetime.now()))
+                    
+                    # 2. Guardar el detalle
+                    for cod in df_seleccionados["Código"]:
+                        cur.execute("""
+                            INSERT INTO detalle_cotizaciones (folio_cotizacion, codigo_examen)
+                            VALUES (%s, %s)
+                        """, (folio_gen, cod))
+                    
+                    conn.commit()
+                    
+                    # 3. Generar PDF con FPDF
+                    pdf = FPDF()
+                    pdf.add_page()
+                    pdf.set_font("Arial", 'B', 16)
+                    pdf.cell(200, 10, "COTIZACIÓN MÉDICA", ln=True, align='C')
+                    pdf.set_font("Arial", '', 12)
+                    pdf.ln(10)
+                    pdf.cell(200, 10, f"Folio: {folio_gen}", ln=True)
+                    pdf.cell(200, 10, f"Paciente: {nombre}", ln=True)
+                    pdf.cell(200, 10, f"RUT: {rut}", ln=True)
+                    pdf.ln(10)
+                    
+                    for _, row in df_seleccionados.iterrows():
+                        pdf.cell(150, 10, f"{row['Nombre']}", 0)
+                        pdf.cell(40, 10, f"${row['Particular_Gral']:,.0f}", 0, ln=True, align='R')
+                    
+                    pdf.ln(10)
+                    pdf.set_font("Arial", 'B', 12)
+                    pdf.cell(190, 10, f"TOTAL: ${total:,.0f}", ln=True, align='R')
+                    
+                    nombre_archivo = f"cotizacion_{folio_gen}.pdf"
+                    pdf.output(nombre_archivo)
+                    
+                    st.success(f"✅ Cotización guardada con Folio: {folio_gen}")
+                    
+                    with open(nombre_archivo, "rb") as f:
+                        st.download_button("Descargar PDF", f, file_name=nombre_archivo)
+                    
+                    cur.close()
+                    conn.close()
+                except Exception as e:
+                    st.error(f"Error al guardar: {e}")
