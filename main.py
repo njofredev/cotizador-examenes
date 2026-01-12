@@ -11,18 +11,19 @@ import psycopg2
 # 1. CONFIGURACIÓN DE PÁGINA E IDIOMA
 st.set_page_config(page_title="Cotizador de Exámenes", page_icon="🏥", layout="wide")
 
-# Configuración de idioma para fechas
+# Intentar forzar el locale a español para el manejo de datos interno
 try:
-    locale.setlocale(locale.LC_ALL, 'es_CL.UTF-8') 
+    # Para Linux/Docker (Cloud)
+    locale.setlocale(locale.LC_ALL, 'es_ES.utf8')
 except:
     try:
+        # Para Windows
         locale.setlocale(locale.LC_ALL, 'spanish')
     except:
         pass
 
-# --- CONEXIÓN A BASE DE DATOS (HÍBRIDA: COOLIFY / STREAMLIT CLOUD) ---
+# --- CONEXIÓN A BASE DE DATOS ---
 def conectar_db():
-    # Intentamos primero por variables de entorno (Coolify)
     host = os.getenv("POSTGRES_HOST")
     if host:
         database = os.getenv("POSTGRES_DATABASE")
@@ -30,7 +31,6 @@ def conectar_db():
         password = os.getenv("POSTGRES_PASSWORD")
         port = os.getenv("POSTGRES_PORT")
     else:
-        # Si no hay variables de entorno, intentamos por st.secrets (Streamlit Cloud/Local)
         try:
             if "postgres" in st.secrets:
                 db_conf = st.secrets["postgres"]
@@ -63,13 +63,11 @@ def guardar_en_db(folio, nombre, t_doc, doc_id, f_nac, t_f, t_c, t_pg, t_pp, df_
     if conn:
         try:
             cur = conn.cursor()
-            # Guardar cotización maestra
             cur.execute("""
                 INSERT INTO cotizaciones (folio, nombre_paciente, tipo_documento, documento_id, fecha_nacimiento, total_fonasa, total_copago, total_particular_gral, total_particular_pref)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (folio, nombre, t_doc, doc_id, f_nac, int(t_f), int(t_c), int(t_pg), int(t_pp)))
             
-            # Guardar cada examen en el detalle
             for _, row in df_examenes.iterrows():
                 cur.execute("""
                     INSERT INTO detalle_cotizaciones (folio_cotizacion, codigo_examen, nombre_examen, valor_copago)
@@ -85,7 +83,7 @@ def guardar_en_db(folio, nombre, t_doc, doc_id, f_nac, t_f, t_c, t_pg, t_pp, df_
             return False
     return False
 
-# --- ESTILO CSS PARA TABLA RESPONSIVA Y BOTONES ---
+# --- ESTILO CSS ---
 st.markdown("""
     <style>
     span[data-baseweb="tag"] { background-color: #0f8fee !important; }
@@ -94,18 +92,8 @@ st.markdown("""
         transition: all 0.3s ease; width: 100%;
     }
     .stButton>button:hover { background-color: #0d79ca !important; }
-    
-    /* Scroll horizontal para móvil */
-    div[data-testid="stTable"] {
-        overflow-x: auto !important;
-        display: block !important;
-    }
-    div[data-testid="stTable"] table {
-        min-width: 600px !important; 
-        width: 100% !important;
-    }
-    
-    /* Radios horizontales */
+    div[data-testid="stTable"] { overflow-x: auto !important; display: block !important; }
+    div[data-testid="stTable"] table { min-width: 600px !important; width: 100% !important; }
     div[data-testid="stRadio"] > div { flex-direction: row; gap: 20px; }
     </style>
     """, unsafe_allow_html=True)
@@ -163,13 +151,13 @@ if df is not None:
     col_nom, col_fec = st.columns([2, 1])
     nombre_p = col_nom.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez")
     
-    # MODIFICACIÓN AQUÍ: Se agregó min_value y max_value
+    # Selector de fecha con rango desde 1930
     fecha_nac = col_fec.date_input(
         "Fecha de Nacimiento:", 
         value=date(1990, 1, 1),
         min_value=date(1930, 1, 1),
         max_value=date.today(),
-        format="DD/MM/YYYY"
+        format="DD/MM/YYYY" # Esto fuerza el formato visual día/mes/año
     )
 
     st.markdown("---")
@@ -230,7 +218,7 @@ if df is not None:
                 pdf.cell(0, 6, f"F. Nacimiento: {fecha_nac.strftime('%d/%m/%Y')}", ln=True)
                 pdf.cell(0, 6, f"Fecha Cotización: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}", ln=True); pdf.ln(6)
 
-                # CABECERA PDF
+                # Cabecera tabla PDF
                 pdf.set_fill_color(15, 143, 238); pdf.set_text_color(255, 255, 255)
                 pdf.set_font("Arial", 'B', 9)
                 pdf.cell(18, 10, "", 0, 0) 
@@ -246,7 +234,6 @@ if df is not None:
                 pdf.cell(30, 10, "Valor general", 1, 0, 'C', True) 
                 pdf.cell(30, 10, "Valor preferencial", 1, 1, 'C', True)
 
-                # Datos del PDF
                 pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", '', 7)
                 for _, row in df_sel.iterrows():
                     n_raw = str(row['Nombre'])
@@ -258,7 +245,6 @@ if df is not None:
                     pdf.cell(30, 8, f"${row['Valor particular General']:,.0f}", 1, 0, 'R')
                     pdf.cell(30, 8, f"${row['Valor particular preferencial']:,.0f}", 1, 1, 'R')
 
-                # Totales PDF
                 pdf.set_font("Arial", 'B', 7); pdf.set_fill_color(240, 240, 240)
                 pdf.cell(70, 10, " TOTALES ACUMULADOS", 1, 0, 'L', True)
                 pdf.cell(30, 10, f"${tot_f:,.0f}", 1, 0, 'R', True)
@@ -266,7 +252,6 @@ if df is not None:
                 pdf.cell(30, 10, f"${tot_pg:,.0f}", 1, 0, 'R', True)
                 pdf.cell(30, 10, f"${tot_pp:,.0f}", 1, 1, 'R', True)
 
-                # NOTAS FINALES
                 pdf.ln(10); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "INFORMACIÓN IMPORTANTE:", ln=True)
                 pdf.set_font("Arial", '', 7)
                 notas = (
