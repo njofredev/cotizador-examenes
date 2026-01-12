@@ -5,35 +5,34 @@ import os
 import psycopg2
 from datetime import datetime
 
-# --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="Cotizador Policlínico Tabancura", page_icon="🏥", layout="wide")
+# 1. CONFIGURACIÓN
+st.set_page_config(page_title="Revisión de Exámenes", page_icon="🔍", layout="wide")
 
 def conectar_db():
-    host = os.getenv("POSTGRES_HOST")
+    import os
+    # Intentamos obtener variables de entorno de Coolify (Production)
+    host = os.environ.get("POSTGRES_HOST")
+    database = os.environ.get("POSTGRES_DATABASE")
+    user = os.environ.get("POSTGRES_USER")
+    password = os.environ.get("POSTGRES_PASSWORD")
+    port = os.environ.get("POSTGRES_PORT")
+
+    # Si no existen en el entorno, intentamos st.secrets (Local/Streamlit Cloud)
     if not host:
         try:
             db_conf = st.secrets["postgres"]
-            host = db_conf["host"]
-            database = db_conf["database"]
-            user = db_conf["user"]
-            password = db_conf["password"]
-            port = db_conf["port"]
+            host, database, user, password, port = db_conf["host"], db_conf["database"], db_conf["user"], db_conf["password"], db_conf["port"]
         except:
-            st.error("❌ No hay variables de entorno configuradas.")
-            return None
-    else:
-        database = os.getenv("POSTGRES_DATABASE")
-        user = os.getenv("POSTGRES_USER")
-        password = os.getenv("POSTGRES_PASSWORD")
-        port = os.getenv("POSTGRES_PORT")
+            pass
+
+    if not host:
+        st.error("❌ Error: No se encontraron credenciales de base de datos en el servidor.")
+        return None
 
     try:
-        return psycopg2.connect(
-            host=host, database=database, user=user, 
-            password=password, port=port, sslmode="require"
-        )
+        return psycopg2.connect(host=host, database=database, user=user, password=password, port=port, sslmode="require")
     except Exception as e:
-        st.error(f"❌ Error de conexión: {e}")
+        st.error(f"❌ Error de conexión física: {e}")
         return None
 
 @st.cache_data
@@ -42,92 +41,60 @@ def cargar_aranceles():
         st.error("❌ Archivo 'aranceles.xlsx' no encontrado.")
         return None
     df = pd.read_excel("aranceles.xlsx")
-    # Ajuste de nombres de columnas según tu Excel
-    df.columns = ["Código", "Nombre", "Fonasa", "Copago", "Particular_Gral", "Particular_Pref"]
+    df.columns = ["Código", "Nombre", "Valor bono Fonasa", "Valor copago", "Valor particular General", "Valor particular preferencial"]
     df["Código"] = df["Código"].astype(str).str.replace(".0", "", regex=False)
     return df
 
-# --- 2. INTERFAZ ---
-st.title("Cotizador de Exámenes")
-st.subheader("Policlínico Tabancura")
+# --- INTERFAZ ---
+if os.path.exists("logo.png"): st.image("logo.png")
+st.title("Revisión de Cotizaciones Realizadas")
 
-# Formulario de paciente
-with st.expander("Datos del Paciente", expanded=True):
-    col1, col2 = st.columns(2)
-    with col1:
-        nombre = st.text_input("Nombre Completo")
-        rut = st.text_input("RUT")
-    with col2:
-        fecha_nac = st.date_input("Fecha de Nacimiento", min_value=datetime(1920, 1, 1))
+folio_busqueda = st.text_input("Ingrese el Folio (8 caracteres):").upper().strip()
 
-# Selección de exámenes
-aranceles = cargar_aranceles()
+if st.button("Buscar Cotización"):
+    if not folio_busqueda:
+        st.warning("⚠️ Ingrese un folio.")
+    else:
+        conn = conectar_db()
+        if conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM cotizaciones WHERE folio = %s", (folio_busqueda,))
+            maestro = cur.fetchone()
+            
+            if maestro:
+                cur.execute("SELECT codigo_examen FROM detalle_cotizaciones WHERE folio_cotizacion = %s", (folio_busqueda,))
+                codigos_db = [row[0] for row in cur.fetchall()]
+                df_precios = cargar_aranceles()
+                
+                if df_precios is not None:
+                    df_final = df_precios[df_precios["Código"].isin(codigos_db)].copy()
+                    st.success(f"✅ Cotización encontrada para: {maestro[2]}")
+                    
+                    # TABLA WEB
+                    st.table(df_final.style.format("${:,.0f}", subset=["Valor bono Fonasa", "Valor copago", "Valor particular General", "Valor particular preferencial"]))
+                    
+                    # --- PDF CON CABEZALES AGRUPADOS ---
+                    pdf = FPDF(); pdf.add_page()
+                    if os.path.exists("logo.png"): pdf.image("logo.png", 10, 8, h=12)
+                    pdf.set_font("Arial", 'B', 10); pdf.set_text_color(15, 143, 238); pdf.cell(0, 5, f"FOLIO: {maestro[1]}", ln=True, align='R')
+                    pdf.set_text_color(0, 0, 0); pdf.ln(10); pdf.set_font("Arial", 'B', 14); pdf.cell(0, 10, "Exámenes de Laboratorio", ln=True, align='C'); pdf.ln(3)
 
-if aranceles is not None:
-    examenes_nombres = aranceles["Nombre"].tolist()
-    seleccionados = st.multiselect("Seleccione los exámenes a cotizar:", examenes_nombres)
-    
-    df_seleccionados = aranceles[aranceles["Nombre"].isin(seleccionados)]
-    
-    if not df_seleccionados.empty:
-        st.write("### Resumen de Cotización")
-        st.table(df_seleccionados[["Código", "Nombre", "Particular_Gral"]])
-        
-        total = df_seleccionados["Particular_Gral"].sum()
-        st.metric("Total a Pagar (Particular)", f"${total:,.0f}")
+                    pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(15, 143, 238); pdf.set_text_color(255, 255, 255)
+                    pdf.cell(18, 10, "", 0, 0); pdf.cell(52, 10, "", 0, 0); pdf.cell(60, 10, "Bono Fonasa", 1, 0, 'C', True); pdf.cell(60, 10, "Arancel particular", 1, 1, 'C', True)
+                    
+                    pdf.set_font("Arial", 'B', 7); pdf.cell(18, 10, "Código", 1, 0, 'C', True); pdf.cell(52, 10, " Nombre", 1, 0, 'L', True); pdf.cell(30, 10, "Valor Bono", 1, 0, 'C', True); pdf.cell(30, 10, "Valor a pagar(*)", 1, 0, 'C', True); pdf.cell(30, 10, "Valor general", 1, 0, 'C', True); pdf.cell(30, 10, "Valor preferencial", 1, 1, 'C', True)
 
-        if st.button("Guardar y Generar PDF"):
-            conn = conectar_db()
-            if conn:
-                try:
-                    cur = conn.cursor()
-                    # Generar un Folio Simple
-                    folio_gen = f"COT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-                    
-                    # 1. Guardar en la tabla cotizaciones
-                    cur.execute("""
-                        INSERT INTO cotizaciones (folio, rut, nombre, fecha_nacimiento, fecha_creacion)
-                        VALUES (%s, %s, %s, %s, %s)
-                    """, (folio_gen, rut, nombre, fecha_nac, datetime.now()))
-                    
-                    # 2. Guardar el detalle
-                    for cod in df_seleccionados["Código"]:
-                        cur.execute("""
-                            INSERT INTO detalle_cotizaciones (folio_cotizacion, codigo_examen)
-                            VALUES (%s, %s)
-                        """, (folio_gen, cod))
-                    
-                    conn.commit()
-                    
-                    # 3. Generar PDF con FPDF
-                    pdf = FPDF()
-                    pdf.add_page()
-                    pdf.set_font("Arial", 'B', 16)
-                    pdf.cell(200, 10, "COTIZACIÓN MÉDICA", ln=True, align='C')
-                    pdf.set_font("Arial", '', 12)
-                    pdf.ln(10)
-                    pdf.cell(200, 10, f"Folio: {folio_gen}", ln=True)
-                    pdf.cell(200, 10, f"Paciente: {nombre}", ln=True)
-                    pdf.cell(200, 10, f"RUT: {rut}", ln=True)
-                    pdf.ln(10)
-                    
-                    for _, row in df_seleccionados.iterrows():
-                        pdf.cell(150, 10, f"{row['Nombre']}", 0)
-                        pdf.cell(40, 10, f"${row['Particular_Gral']:,.0f}", 0, ln=True, align='R')
-                    
-                    pdf.ln(10)
-                    pdf.set_font("Arial", 'B', 12)
-                    pdf.cell(190, 10, f"TOTAL: ${total:,.0f}", ln=True, align='R')
-                    
-                    nombre_archivo = f"cotizacion_{folio_gen}.pdf"
-                    pdf.output(nombre_archivo)
-                    
-                    st.success(f"✅ Cotización guardada con Folio: {folio_gen}")
-                    
-                    with open(nombre_archivo, "rb") as f:
-                        st.download_button("Descargar PDF", f, file_name=nombre_archivo)
-                    
-                    cur.close()
-                    conn.close()
-                except Exception as e:
-                    st.error(f"Error al guardar: {e}")
+                    pdf.set_text_color(0, 0, 0); pdf.set_font("Arial", '', 7)
+                    for _, row in df_final.iterrows():
+                        n_mostrar = (str(row['Nombre'])[:35] + "..") if len(str(row['Nombre'])) > 37 else str(row['Nombre'])
+                        pdf.cell(18, 8, str(row['Código']), 1, 0, 'C'); pdf.cell(52, 8, f" {n_mostrar}", 1, 0, 'L'); pdf.cell(30, 8, f"${row['Valor bono Fonasa']:,.0f}", 1, 0, 'R'); pdf.cell(30, 8, f"${row['Valor copago']:,.0f}", 1, 0, 'R'); pdf.cell(30, 8, f"${row['Valor particular General']:,.0f}", 1, 0, 'R'); pdf.cell(30, 8, f"${row['Valor particular preferencial']:,.0f}", 1, 1, 'R')
+
+                    pdf.set_font("Arial", 'B', 7); pdf.set_fill_color(240, 240, 240); pdf.cell(70, 10, " TOTALES REIMPRESOS", 1, 0, 'L', True); pdf.cell(30, 10, f"${maestro[7]:,.0f}", 1, 0, 'R', True); pdf.cell(30, 10, f"${maestro[8]:,.0f}", 1, 0, 'R', True); pdf.cell(30, 10, f"${maestro[9]:,.0f}", 1, 0, 'R', True); pdf.cell(30, 10, f"${maestro[10]:,.0f}", 1, 1, 'R', True)
+
+                    pdf_name = f"Reimpresion_{maestro[1]}.pdf"
+                    pdf.output(pdf_name)
+                    with open(pdf_name, "rb") as f:
+                        st.download_button("🔵 Descargar PDF Reimpreso", data=f, file_name=pdf_name, mime="application/pdf")
+            else:
+                st.error("❌ Folio no encontrado.")
+            cur.close(); conn.close()
