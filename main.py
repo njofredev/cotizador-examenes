@@ -22,9 +22,7 @@ except:
 # --- CONEXIÓN A BASE DE DATOS (USANDO ST.SECRETS) ---
 def conectar_db():
     try:
-        # Extraemos los datos desde el archivo de secretos
         db_secrets = st.secrets["postgres"]
-        
         conn = psycopg2.connect(
             host=db_secrets["host"],
             database=db_secrets["database"],
@@ -43,13 +41,11 @@ def guardar_en_db(folio, nombre, t_doc, doc_id, f_nac, t_f, t_c, t_pg, t_pp, df_
     if conn:
         try:
             cur = conn.cursor()
-            # 1. Insertar cotización maestra
             cur.execute("""
                 INSERT INTO cotizaciones (folio, nombre_paciente, tipo_documento, documento_id, fecha_nacimiento, total_fonasa, total_copago, total_particular_gral, total_particular_pref)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (folio, nombre, t_doc, doc_id, f_nac, int(t_f), int(t_c), int(t_pg), int(t_pp)))
             
-            # 2. Insertar detalle de exámenes
             for _, row in df_examenes.iterrows():
                 cur.execute("""
                     INSERT INTO detalle_cotizaciones (folio_cotizacion, codigo_examen, nombre_examen, valor_copago)
@@ -65,7 +61,7 @@ def guardar_en_db(folio, nombre, t_doc, doc_id, f_nac, t_f, t_c, t_pg, t_pp, df_
             return False
     return False
 
-# --- ESTILO CSS (CELULARES Y RADIOS) ---
+# --- ESTILO CSS ---
 st.markdown("""
     <style>
     span[data-baseweb="tag"] { background-color: #0f8fee !important; }
@@ -90,7 +86,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIONES AUXILIARES ---
+# --- FUNCIONES DE APOYO ---
 def generar_folio():
     caracteres = string.ascii_uppercase + string.digits
     return ''.join(secrets.choice(caracteres) for i in range(8))
@@ -120,7 +116,7 @@ def cargar_datos():
 
 df = cargar_datos()
 
-# --- INTERFAZ DE USUARIO ---
+# --- INTERFAZ ---
 if os.path.exists("logo.png"):
     st.image("logo.png")
 
@@ -129,7 +125,7 @@ st.title("Cotizador de Exámenes")
 if df is not None:
     st.subheader("Datos del Paciente")
     
-    # ORDEN: RUT -> Nombre -> Fecha
+    # 1. RUT/Documento (Primero)
     col_tipo, col_num = st.columns([1, 2])
     with col_tipo:
         tipo_doc = st.radio("Tipo de Documento:", ["RUT Nacional", "Extranjero / Pasaporte"], horizontal=True)
@@ -141,6 +137,7 @@ if df is not None:
         else:
             documento_final = st.text_input("Número de Documento Extranjero:", placeholder="Pasaporte o ID")
 
+    # 2. Nombre y Fecha
     col_nom, col_fec = st.columns([2, 1])
     nombre_p = col_nom.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez")
     fecha_nac = col_fec.date_input("Fecha de Nacimiento:", value=date(1990, 1, 1), format="DD/MM/YYYY")
@@ -157,7 +154,7 @@ if df is not None:
         df_sel = df[df["busqueda"].isin(seleccionados)].copy()
         st.write("### Detalle de Cotización")
         
-        # Tabla Web responsiva
+        # Tabla Web (Cabezales cortos para móvil)
         df_web = df_sel.drop(columns=["busqueda"]).rename(columns={
             "Valor bono Fonasa": "Bono Fonasa",
             "Valor copago": "Copago",
@@ -166,7 +163,7 @@ if df is not None:
         })
         st.table(df_web.style.format("${:,.0f}", subset=["Bono Fonasa", "Copago", "Part. Gral", "Part. Pref"]))
         
-        # Cálculos de Totales
+        # Totales
         tot_f = df_sel["Valor bono Fonasa"].sum()
         tot_c = df_sel["Valor copago"].sum()
         tot_pg = df_sel["Valor particular General"].sum()
@@ -178,26 +175,30 @@ if df is not None:
         m3.metric("Total Part. Gral", f"${tot_pg:,.0f}")
         m4.metric("Total Part. Pref", f"${tot_pp:,.0f}")
 
-        # GENERACIÓN DE PDF Y GUARDADO
+        # 4. GENERACIÓN DE PDF Y GUARDADO
         if st.button("Generar Cotización y Guardar"):
             if not nombre_p or not documento_final:
                 st.warning("⚠️ Complete los datos del paciente.")
             else:
                 folio = generar_folio()
                 
-                # Registro en BD
-                if guardar_en_db(folio, nombre_p, tipo_doc, documento_final, fecha_nac, tot_f, tot_c, tot_pg, tot_pp, df_sel):
+                # Guardar en Base de Datos
+                exito_db = guardar_en_db(folio, nombre_p, tipo_doc, documento_final, fecha_nac, tot_f, tot_c, tot_pg, tot_pp, df_sel)
+                
+                if exito_db:
                     st.success(f"✅ Cotización registrada (Folio: {folio})")
 
                 # Generar PDF
                 pdf = FPDF(orientation='P', unit='mm', format='A4')
                 pdf.add_page()
                 if os.path.exists("logo.png"): pdf.image("logo.png", 10, 8, h=12)
+                
                 pdf.set_font("Arial", 'B', 10)
                 pdf.set_text_color(15, 143, 238)
                 pdf.cell(0, 5, f"FOLIO: {folio}", ln=True, align='R')
                 pdf.set_text_color(0, 0, 0)
                 pdf.ln(10)
+                
                 pdf.set_font("Arial", 'B', 14)
                 pdf.cell(0, 10, "Exámenes de Laboratorio", ln=True, align='C')
                 pdf.ln(3)
@@ -209,9 +210,18 @@ if df is not None:
                 pdf.cell(0, 6, f"Fecha Cotización: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
                 pdf.ln(6)
 
-                # Tabla PDF (Cabezales originales completos)
+                # --- CABECERA PDF RESTAURADA (GRUPO 1 Y 2) ---
                 pdf.set_fill_color(15, 143, 238)
                 pdf.set_text_color(255, 255, 255)
+                pdf.set_font("Arial", 'B', 9)
+                
+                # Primera fila de cabecera (Agrupada)
+                pdf.cell(18, 10, "", 0, 0) 
+                pdf.cell(52, 10, "", 0, 0)
+                pdf.cell(60, 10, "Bono Fonasa", 1, 0, 'C', True)
+                pdf.cell(60, 10, "Arancel particular", 1, 1, 'C', True)
+
+                # Segunda fila de cabecera (Sub-columnas)
                 pdf.set_font("Arial", 'B', 7)
                 pdf.cell(18, 10, "Código", 1, 0, 'C', True)
                 pdf.cell(52, 10, " Nombre", 1, 0, 'L', True)
@@ -220,6 +230,7 @@ if df is not None:
                 pdf.cell(30, 10, "Valor general", 1, 0, 'C', True) 
                 pdf.cell(30, 10, "Valor preferencial", 1, 1, 'C', True)
 
+                # Filas de datos
                 pdf.set_text_color(0, 0, 0)
                 pdf.set_font("Arial", '', 7)
                 for _, row in df_sel.iterrows():
@@ -241,7 +252,7 @@ if df is not None:
                 pdf.cell(30, 10, f"${tot_pg:,.0f}", 1, 0, 'R', True)
                 pdf.cell(30, 10, f"${tot_pp:,.0f}", 1, 1, 'R', True)
 
-                # NOTAS ORIGINALES COMPLETAS
+                # --- NOTAS ORIGINALES COMPLETAS ---
                 pdf.ln(10)
                 pdf.set_font("Arial", 'B', 8)
                 pdf.cell(0, 5, "INFORMACIÓN IMPORTANTE:", ln=True)
