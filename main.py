@@ -134,7 +134,8 @@ def cargar_datos():
         df["Código"] = df["Código"].astype(str).str.replace(".0", "", regex=False)
         df["busqueda"] = df["Código"] + " - " + df["Nombre"]
         return df
-    except:
+    except Exception as e:
+        st.error(f"Error al cargar aranceles.xlsx: {e}")
         return None
 
 df = cargar_datos()
@@ -148,7 +149,6 @@ st.title("Cotizador de Exámenes")
 if df is not None:
     st.subheader("Datos del Paciente")
     
-    # Orden: Documento -> Nombre -> Fecha
     col_tipo, col_num = st.columns([1, 2])
     with col_tipo:
         tipo_doc = st.radio("Tipo de Documento:", ["RUT Nacional", "Extranjero / Pasaporte"], horizontal=True)
@@ -162,7 +162,15 @@ if df is not None:
 
     col_nom, col_fec = st.columns([2, 1])
     nombre_p = col_nom.text_input("Nombre Completo:", placeholder="Ej: Juan Pérez")
-    fecha_nac = col_fec.date_input("Fecha de Nacimiento:", value=date(1990, 1, 1), format="DD/MM/YYYY")
+    
+    # MODIFICACIÓN AQUÍ: Se agregó min_value y max_value
+    fecha_nac = col_fec.date_input(
+        "Fecha de Nacimiento:", 
+        value=date(1990, 1, 1),
+        min_value=date(1930, 1, 1),
+        max_value=date.today(),
+        format="DD/MM/YYYY"
+    )
 
     st.markdown("---")
 
@@ -176,7 +184,6 @@ if df is not None:
         df_sel = df[df["busqueda"].isin(seleccionados)].copy()
         st.write("### Detalle de Cotización")
         
-        # Tabla Web responsiva
         df_web = df_sel.drop(columns=["busqueda"]).rename(columns={
             "Valor bono Fonasa": "Bono Fonasa",
             "Valor copago": "Copago",
@@ -185,7 +192,6 @@ if df is not None:
         })
         st.table(df_web.style.format("${:,.0f}", subset=["Bono Fonasa", "Copago", "Part. Gral", "Part. Pref"]))
         
-        # Totales
         tot_f = df_sel["Valor bono Fonasa"].sum()
         tot_c = df_sel["Valor copago"].sum()
         tot_pg = df_sel["Valor particular General"].sum()
@@ -197,7 +203,6 @@ if df is not None:
         m3.metric("Total Part. Gral", f"${tot_pg:,.0f}")
         m4.metric("Total Part. Pref", f"${tot_pp:,.0f}")
 
-        # GENERACIÓN DE PDF Y GUARDADO
         if st.button("Generar Cotización y Guardar"):
             if not nombre_p or not documento_final:
                 st.warning("⚠️ Complete los datos del paciente.")
@@ -225,7 +230,7 @@ if df is not None:
                 pdf.cell(0, 6, f"F. Nacimiento: {fecha_nac.strftime('%d/%m/%Y')}", ln=True)
                 pdf.cell(0, 6, f"Fecha Cotización: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}", ln=True); pdf.ln(6)
 
-                # --- CABECERA PDF CON GRUPOS RESTAURADA ---
+                # CABECERA PDF
                 pdf.set_fill_color(15, 143, 238); pdf.set_text_color(255, 255, 255)
                 pdf.set_font("Arial", 'B', 9)
                 pdf.cell(18, 10, "", 0, 0) 
@@ -261,7 +266,7 @@ if df is not None:
                 pdf.cell(30, 10, f"${tot_pg:,.0f}", 1, 0, 'R', True)
                 pdf.cell(30, 10, f"${tot_pp:,.0f}", 1, 1, 'R', True)
 
-                # NOTAS FINALES COMPLETAS
+                # NOTAS FINALES
                 pdf.ln(10); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "INFORMACIÓN IMPORTANTE:", ln=True)
                 pdf.set_font("Arial", '', 7)
                 notas = (
