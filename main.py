@@ -30,6 +30,7 @@ def conectar_db():
         user = os.getenv("POSTGRES_USER")
         password = os.getenv("POSTGRES_PASSWORD")
         port = os.getenv("POSTGRES_PORT")
+        sslmode="disable"  # <-- Agrega esta línea
     else:
         try:
             if "postgres" in st.secrets:
@@ -51,7 +52,7 @@ def conectar_db():
             user=user,
             password=password,
             port=port,
-            sslmode="require"
+            sslmode="disabled"
         )
         return conn
     except Exception as e:
