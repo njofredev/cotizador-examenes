@@ -52,7 +52,7 @@ def conectar_db():
             user=user,
             password=password,
             port=port,
-            sslmode="disabled"
+            sslmode="disable"
         )
         return conn
     except Exception as e:
