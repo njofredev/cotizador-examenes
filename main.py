@@ -8,7 +8,7 @@ from datetime import date
 import locale
 import psycopg2
 
-# 1. CONFIGURACIÓN DE PÁGINA E IDIOMA
+# 1. CONFIGURACIÓN DE PÁGINA E IDIOMA a
 st.set_page_config(page_title="Cotizador de Exámenes", page_icon="🏥", layout="wide")
 
 # Configuración de idioma para fechas
