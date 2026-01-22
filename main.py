@@ -20,6 +20,7 @@ def conectar_db():
             user = db_conf["user"]
             password = db_conf["password"]
             port = db_conf["port"]
+            sslmode="disable"
         except:
             st.error("❌ No hay variables de entorno ni st.secrets configurados.")
             return None
@@ -28,6 +29,7 @@ def conectar_db():
         user = os.getenv("POSTGRES_USER")
         password = os.getenv("POSTGRES_PASSWORD")
         port = os.getenv("POSTGRES_PORT")
+        sslmode="disable"
 
     try:
         return psycopg2.connect(
