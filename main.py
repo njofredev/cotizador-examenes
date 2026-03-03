@@ -43,18 +43,20 @@ def conectar_db():
             else:
                 return None
         except:
+            st.error("❌ No hay variables de entorno ni st.secrets configurados.")
             return None
+    else:
+        database = os.getenv("POSTGRES_DATABASE")
+        user = os.getenv("POSTGRES_USER")
+        password = os.getenv("POSTGRES_PASSWORD")
+        port = os.getenv("POSTGRES_PORT")
 
     try:
-        conn = psycopg2.connect(
-            host=host,
-            database=database,
-            user=user,
-            password=password,
-            port=port,
-            sslmode="disable"
+        return psycopg2.connect(
+            host=host, database=database, user=user, 
+            password=password, port=port, sslmode="require",
+            connect_timeout=10 # Evita que se quede pegado si no conecta
         )
-        return conn
     except Exception as e:
         st.error(f"Error crítico de conexión a DB: {e}")
         return None
