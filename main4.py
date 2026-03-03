@@ -107,12 +107,15 @@ PACKS = {
 
 def conectar_db():
     try:
-        # 1. Intentamos obtener los datos de st.secrets solo si 'postgres' existe
-        if "postgres" in st.secrets:
-            return psycopg2.connect(**st.secrets["postgres"])
+        # 1. Intentamos obtener el diccionario 'postgres' de forma segura
+        # .get() no lanza error si la sección no existe
+        pg_secrets = st.secrets.get("postgres")
         
-        # 2. Si no hay secrets (como en Coolify), usamos os.environ
-        # Importante: Los nombres deben coincidir EXACTAMENTE con tus keys en Coolify
+        if pg_secrets:
+            return psycopg2.connect(**pg_secrets)
+        
+        # 2. Si no hay secretos (Coolify), usamos las variables de entorno directamente
+        # Asegúrate de que los nombres coincidan con los de tu imagen de Coolify
         return psycopg2.connect(
             host=os.environ.get("POSTGRES_HOST"),
             database=os.environ.get("POSTGRES_DATABASE"),
