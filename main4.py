@@ -300,7 +300,7 @@ elif st.session_state.paso == 'formulario':
 
                             pdf.ln(10); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "SUCURSALES:", ln=True)
                             pdf.set_font("Arial", '', 7)
-                            pdf.cell(0, 4, "- Vitacura: Av. Vitacura #8620.", ln=True)
+                            pdf.cell(0, 4, "- Sucursal Vitacura: Av. Vitacura #8620, comuna de Vitacura.", ln=True)
                             pdf.cell(0, 4, "- Horario toma de muestras: Lunes a Viernes de 08:30am a 11:00am", ln=True)
                             pdf.ln(2); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "INDICACIONES IMPORTANTES:", ln=True)
                             pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios.\n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.")
@@ -329,10 +329,10 @@ elif st.session_state.paso == 'formulario':
 st.markdown("<br><br>", unsafe_allow_html=True)
 f_col1, f_col2, f_col3 = st.columns(3)
 with f_col1:
-    st.markdown('<center><a href="javascript:window.location.reload();" class="footer-link">📄 Cotizador</a></center>', unsafe_allow_html=True)
+    st.markdown('<center><a href="https://cotizador.policlinicotabancura.cl" class="footer-link">📄 Cotizador</a></center>', unsafe_allow_html=True)
 with f_col2:
     st.markdown('<center><a href="https://www.policlinicotabancura.cl" target="_blank" class="footer-link">🌐 Sitio Web</a></center>', unsafe_allow_html=True)
 with f_col3:
-    st.markdown('<center><a href="https://www.instagram.com/policlinicotabancura/" target="_blank" class="footer-link">📸 Instagram</a></center>', unsafe_allow_html=True)
+    st.markdown('<center><a href="https://www.instagram.com/politabancura/" target="_blank" class="footer-link">📸 Instagram</a></center>', unsafe_allow_html=True)
 
 st.markdown("<p style='text-align: center; color: #aaa; font-size: 0.8rem; margin-top: 10px;'>© 2026 Policlínico Tabancura</p>", unsafe_allow_html=True)
