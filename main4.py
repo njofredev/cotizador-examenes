@@ -107,9 +107,22 @@ PACKS = {
 
 def conectar_db():
     try:
+        # 1. Intentar leer desde el formato de diccionario (Local/Secrets.toml)
         if "postgres" in st.secrets:
             return psycopg2.connect(**st.secrets["postgres"])
-    except: return None
+        
+        # 2. Si no existe el diccionario, leer variables individuales (Coolify)
+        return psycopg2.connect(
+            host=os.getenv("POSTGRES_HOST"),
+            database=os.getenv("POSTGRES_DATABASE"),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            port=os.getenv("POSTGRES_PORT")
+        )
+    except Exception as e:
+        # Esto te mostrará el error real en la interfaz si la conexión falla
+        st.error(f"Error de conexión a la base de datos: {e}")
+        return None
 
 def buscar_paciente_historial(doc_id):
     conn = conectar_db()
