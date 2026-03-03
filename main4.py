@@ -303,7 +303,7 @@ elif st.session_state.paso == 'formulario':
                             pdf.cell(0, 4, "- Sucursal Vitacura: Av. Vitacura #8620, comuna de Vitacura.", ln=True)
                             pdf.cell(0, 4, "- Horario toma de muestras: Lunes a Viernes de 08:30am a 11:00am", ln=True)
                             pdf.ln(2); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "INDICACIONES IMPORTANTES:", ln=True)
-                            pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios.\n- Si el exámen cotizado tiene costo $0, la prestación SÓLO se encuentra en previsión de Fonasa.\n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.")
+                            pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios.\n- Si el examen cotizado tiene costo $0, el valor del exámen SÓLO se encuentra en previsión Fonasa.\n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.")
 
                             path = f"Cot_{folio}.pdf"; pdf.output(path); st.session_state.pdf_path = path; st.session_state.pdf_generado = True; st.rerun()
                 with c_acc2:
