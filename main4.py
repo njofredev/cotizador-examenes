@@ -107,20 +107,20 @@ PACKS = {
 
 def conectar_db():
     try:
-        # 1. Intentar leer desde el formato de diccionario (Local/Secrets.toml)
+        # 1. Intentamos obtener los datos de st.secrets solo si 'postgres' existe
         if "postgres" in st.secrets:
             return psycopg2.connect(**st.secrets["postgres"])
         
-        # 2. Si no existe el diccionario, leer variables individuales (Coolify)
+        # 2. Si no hay secrets (como en Coolify), usamos os.environ
+        # Importante: Los nombres deben coincidir EXACTAMENTE con tus keys en Coolify
         return psycopg2.connect(
-            host=os.getenv("POSTGRES_HOST"),
-            database=os.getenv("POSTGRES_DATABASE"),
-            user=os.getenv("POSTGRES_USER"),
-            password=os.getenv("POSTGRES_PASSWORD"),
-            port=os.getenv("POSTGRES_PORT")
+            host=os.environ.get("POSTGRES_HOST"),
+            database=os.environ.get("POSTGRES_DATABASE"),
+            user=os.environ.get("POSTGRES_USER"),
+            password=os.environ.get("POSTGRES_PASSWORD"),
+            port=os.environ.get("POSTGRES_PORT")
         )
     except Exception as e:
-        # Esto te mostrará el error real en la interfaz si la conexión falla
         st.error(f"Error de conexión a la base de datos: {e}")
         return None
 
