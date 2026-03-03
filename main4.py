@@ -269,7 +269,7 @@ elif st.session_state.paso == 'formulario':
                             pdf.add_page()
                             
                             if os.path.exists("logo_vec.svg"):
-                                pdf.image("logo_vec.svg", x=10, y=8, w=30)
+                                pdf.image("logo_vec.svg", x=10, y=8, w=15)
                             
                             pdf.set_font("Arial", 'B', 10); pdf.cell(0, 10, f"FOLIO: {folio}", ln=1, align='R')
                             pdf.set_font("Arial", 'I', 8); pdf.cell(0, 5, f"Fecha de Emisión: {timestamp_emision}", ln=1, align='R') # Timestamp añadido
@@ -298,16 +298,16 @@ elif st.session_state.paso == 'formulario':
                             res1, res2 = (t_f, t_c) if prevision == "Fonasa" else (t_pg, t_pp)
                             pdf.cell(w[2], 10, f"${res1:,.0f}", 1, 0, 'R', True); pdf.cell(w[3], 10, f"${res2:,.0f}", 1, 1, 'R', True)
 
-                            pdf.ln(10); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "SUCURSALES Y HORARIOS:", ln=True)
+                            pdf.ln(10); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "SUCURSALES:", ln=True)
                             pdf.set_font("Arial", '', 7)
-                            pdf.cell(0, 4, "- Vitacura: Av. Vitacura #8620. | - Los Tribunales: Calle Los Tribunales #1268.", ln=True)
-                            pdf.cell(0, 4, "- Horario toma de muestras: Lunes a Viernes de 08:30 a 11:00 hrs.", ln=True)
+                            pdf.cell(0, 4, "- Vitacura: Av. Vitacura #8620.", ln=True)
+                            pdf.cell(0, 4, "- Horario toma de muestras: Lunes a Viernes de 08:30am a 11:00am", ln=True)
                             pdf.ln(2); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "INDICACIONES IMPORTANTES:", ln=True)
-                            pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez: 30 días.\n- (*) El valor total a pagar es estimado.\n- El ayuno no debe superar las 12 horas.\n- PTGO: Con agenda previa.\n- Valores sujetos a confirmación en sucursal al momento de la atención.")
+                            pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios.\n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.")
 
                             path = f"Cot_{folio}.pdf"; pdf.output(path); st.session_state.pdf_path = path; st.session_state.pdf_generado = True; st.rerun()
                 with c_acc2:
-                    st.link_button("📅 Agendar Hora de Toma", "https://ff.healthatom.io/FKV7ZY")
+                    st.link_button("📅 Agenda una toma de muestras", "https://ff.healthatom.io/FKV7ZY")
 
         if st.session_state.pdf_generado:
             with st.container():
