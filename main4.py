@@ -106,26 +106,32 @@ PACKS = {
 }
 
 def conectar_db():
+    # 1. Intentamos primero con Variables de Entorno (Prioridad Coolify/Producción)
+    # Esto evita que Streamlit busque el archivo secrets.toml si ya tenemos las variables
+    host = os.environ.get("POSTGRES_HOST")
+    
+    if host:
+        try:
+            return psycopg2.connect(
+                host=host,
+                database=os.environ.get("POSTGRES_DATABASE"),
+                user=os.environ.get("POSTGRES_USER"),
+                password=os.environ.get("POSTGRES_PASSWORD"),
+                port=os.environ.get("POSTGRES_PORT")
+            )
+        except Exception as e:
+            st.error(f"Error con variables de entorno: {e}")
+            return None
+
+    # 2. Solo si no hay variables de entorno, intentamos con st.secrets (Local)
     try:
-        # 1. Intentamos obtener el diccionario 'postgres' de forma segura
-        # .get() no lanza error si la sección no existe
-        pg_secrets = st.secrets.get("postgres")
+        if "postgres" in st.secrets:
+            return psycopg2.connect(**st.secrets["postgres"])
+    except Exception:
+        # Si aquí falla, es que no hay ni variables ni secretos
+        pass
         
-        if pg_secrets:
-            return psycopg2.connect(**pg_secrets)
-        
-        # 2. Si no hay secretos (Coolify), usamos las variables de entorno directamente
-        # Asegúrate de que los nombres coincidan con los de tu imagen de Coolify
-        return psycopg2.connect(
-            host=os.environ.get("POSTGRES_HOST"),
-            database=os.environ.get("POSTGRES_DATABASE"),
-            user=os.environ.get("POSTGRES_USER"),
-            password=os.environ.get("POSTGRES_PASSWORD"),
-            port=os.environ.get("POSTGRES_PORT")
-        )
-    except Exception as e:
-        st.error(f"Error de conexión a la base de datos: {e}")
-        return None
+    return None
 
 def buscar_paciente_historial(doc_id):
     conn = conectar_db()
