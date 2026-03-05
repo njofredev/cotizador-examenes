@@ -8,7 +8,7 @@ import uuid
 from datetime import date, datetime
 import psycopg2
 
-# 1. Configuración de página y CSS (DISEÑO BLOQUEADO Y MEJORADO PARA TABLA)
+# 1. Configuración de página y CSS
 st.set_page_config(
     page_title="Cotizador Policlínico Tabancura", 
     page_icon="🏥", 
@@ -26,7 +26,7 @@ st.markdown("""
         display: flex;
         justify-content: center;
         margin-bottom: 1rem;
-        padding-top: 2rem; /* AJUSTE: Padding superior para que no rebote con el borde */
+        padding-top: 2rem;
     }
     .exam-card {
         background-color: white;
@@ -87,7 +87,14 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* --- SOLUCIÓN PARA LA TABLA WEB --- */
+    .nota-fonasa {
+        color: #718096;
+        font-size: 0.85rem;
+        font-style: italic;
+        margin-top: -10px;
+        margin-bottom: 15px;
+    }
+
     [data-testid="stDataFrame"] td:nth-child(2) p {
         white-space: nowrap;
         overflow: hidden;
@@ -174,6 +181,7 @@ if 'paso' not in st.session_state: st.session_state.paso = 'busqueda'
 if 'seleccionados' not in st.session_state: st.session_state.seleccionados = []
 if 'cantidades' not in st.session_state: st.session_state.cantidades = {}
 if 'pdf_generado' not in st.session_state: st.session_state.pdf_generado = False
+if 'ms_key' not in st.session_state: st.session_state.ms_key = 0
 
 # PASO 1: BÚSQUEDA
 if st.session_state.paso == 'busqueda':
@@ -201,17 +209,14 @@ elif st.session_state.paso == 'formulario':
 
     df_aranceles = cargar_datos()
     if df_aranceles is not None:
+        df_filtrado = df_aranceles.copy()
+
         with st.container():
             st.markdown("#### 👤 Datos del Paciente")
             nombre_p = st.text_input("Nombre Completo", value=st.session_state.nombre_sugerido, disabled=st.session_state.pdf_generado)
             f1, f2 = st.columns(2)
             fecha_nac = f1.date_input("Fecha de Nacimiento", value=date(1990, 1, 1), disabled=st.session_state.pdf_generado)
             prevision = f2.selectbox("Previsión", ["Seleccione...", "Particular", "Fonasa"], index=(2 if st.session_state.get('prevision_sugerida')=="Fonasa" else (1 if st.session_state.get('prevision_sugerida')=="Particular" else 0)), disabled=st.session_state.pdf_generado)
-
-        if prevision == "Fonasa":
-            df_filtrado = df_aranceles[df_aranceles["Código"].str.isnumeric()].copy()
-        else:
-            df_filtrado = df_aranceles.copy()
 
         if not st.session_state.pdf_generado:
             with st.container():
@@ -227,12 +232,18 @@ elif st.session_state.paso == 'formulario':
                                     if it not in st.session_state.seleccionados:
                                         st.session_state.seleccionados.append(it)
                                         st.session_state.cantidades[it] = 1
+                            st.session_state.ms_key += 1
                             st.rerun()
                 
-                st.session_state.seleccionados = st.multiselect(
+                def on_ms_change():
+                    st.session_state.seleccionados = st.session_state[f"ms_{st.session_state.ms_key}"]
+
+                st.multiselect(
                     "➕ Aquí puedes agregar o quitar exámenes de manera individual:", 
                     options=df_filtrado["busqueda"].unique().tolist(), 
-                    default=[s for s in st.session_state.seleccionados if s in df_filtrado["busqueda"].values]
+                    default=[s for s in st.session_state.seleccionados if s in df_filtrado["busqueda"].values],
+                    key=f"ms_{st.session_state.ms_key}",
+                    on_change=on_ms_change
                 )
 
         if st.session_state.seleccionados and prevision != "Seleccione...":
@@ -251,16 +262,20 @@ elif st.session_state.paso == 'formulario':
                         if st.button("✖", key=f"del_{item}", disabled=st.session_state.pdf_generado):
                             st.session_state.seleccionados.remove(item)
                             if item in st.session_state.cantidades: del st.session_state.cantidades[item]
+                            st.session_state.ms_key += 1
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
-            # Cálculos finales
+            # --- Lógica de Negocio (Fallback) ---
             df_sel = df_filtrado[df_filtrado["busqueda"].isin(st.session_state.seleccionados)].copy()
             df_sel["Cant"] = df_sel["busqueda"].map(st.session_state.cantidades).fillna(1).astype(int)
             
-            t_f = (df_sel["Valor bono Fonasa"] * df_sel["Cant"]).sum()
-            t_c = (df_sel["Valor copago"] * df_sel["Cant"]).sum()
+            df_sel["Valor Fonasa Final"] = df_sel["Valor bono Fonasa"]
+            df_sel["Valor Copago Final"] = df_sel.apply(lambda r: r["Valor copago"] if r["Valor bono Fonasa"] > 0 else r["Valor particular General"], axis=1)
+            
+            t_f = (df_sel["Valor Fonasa Final"] * df_sel["Cant"]).sum()
+            t_c = (df_sel["Valor Copago Final"] * df_sel["Cant"]).sum()
             t_pg = (df_sel["Valor particular General"] * df_sel["Cant"]).sum()
             t_pp = (df_sel["Valor particular preferencial"] * df_sel["Cant"]).sum()
 
@@ -269,8 +284,8 @@ elif st.session_state.paso == 'formulario':
             res_c = ["Cant", "Nombre", "Fonasa (Tot)", "Copago (Tot)"] if prevision == "Fonasa" else ["Cant", "Nombre", "P.Gral (Tot)", "P.Pref (Tot)"]
             
             if prevision == "Fonasa":
-                df_disp["Fonasa (Tot)"] = df_disp["Valor bono Fonasa"] * df_disp["Cant"]
-                df_disp["Copago (Tot)"] = df_disp["Valor copago"] * df_disp["Cant"]
+                df_disp["Fonasa (Tot)"] = df_disp["Valor Fonasa Final"] * df_disp["Cant"]
+                df_disp["Copago (Tot)"] = df_disp["Valor Copago Final"] * df_disp["Cant"]
             else:
                 df_disp["P.Gral (Tot)"] = df_disp["Valor particular General"] * df_disp["Cant"]
                 df_disp["P.Pref (Tot)"] = df_disp["Valor particular preferencial"] * df_disp["Cant"]
@@ -290,6 +305,8 @@ elif st.session_state.paso == 'formulario':
             m1, m2 = st.columns(2)
             if prevision == "Fonasa":
                 m1.metric("Total Bono", f"${t_f:,.0f}"); m2.metric("Total Copago a Pagar", f"${t_c:,.0f}")
+                # NUEVA NOTA SOLICITADA
+                st.markdown('<p class="nota-fonasa">Si el exámen cotizado no es cubierto por Fonasa, el valor a pagar corresponde a la segunda columna de Total calculada.</p>', unsafe_allow_html=True)
             else:
                 m1.metric("Total P. Gral", f"${t_pg:,.0f}"); m2.metric("Total P. Pref", f"${t_pp:,.0f}")
 
@@ -311,19 +328,20 @@ elif st.session_state.paso == 'formulario':
                         pdf.cell(0, 6, f"Edad: {calcular_edad(fecha_nac)} años", ln=1)
                         pdf.cell(0, 6, f"Previsión: {prevision}", ln=1); pdf.ln(5)
                         
-                        # AJUSTE: Nombres de columnas actualizados en el PDF
-                        h3, h4 = ("Valor Fonasa", "Copago (valor a pagar)") if prevision == "Fonasa" else ("Valor Gral.", "Valor Pref.")
+                        h3, h4 = ("Valor Fonasa", "Copago o Valor a pagar") if prevision == "Fonasa" else ("Valor Gral.", "Valor Pref.")
                         pdf.set_fill_color(2, 112, 249); pdf.set_text_color(255); pdf.set_font("Arial", 'B', 8)
-                        w = [12, 88, 15, 37.5, 37.5]
-                        for i, h in enumerate(["Cant", "Examen", "Cod", h3, h4]): pdf.cell(w[i], 10, h, 1, 0, 'C', True)
+                        w = [20, 80, 15, 37.5, 37.5]
+                        for i, h in enumerate(["Cod", "Examen", "Cant", h3, h4]): pdf.cell(w[i], 10, h, 1, 0, 'C', True)
                         pdf.ln(); pdf.set_text_color(0); pdf.set_font("Arial", '', 8)
+                        
                         for _, r in df_sel.iterrows():
-                            pdf.cell(w[0], 8, str(int(r['Cant'])), 1, 0, 'C')
+                            pdf.cell(w[0], 8, str(r['Código']), 1, 0, 'C')
                             nombre_pdf = str(r['Nombre'])
-                            if len(nombre_pdf) > 48: nombre_pdf = nombre_pdf[:45] + "..."
+                            if len(nombre_pdf) > 42: nombre_pdf = nombre_pdf[:40] + "..."
                             pdf.cell(w[1], 8, f" {nombre_pdf}", 1)
-                            pdf.cell(w[2], 8, str(r['Código']), 1, 0, 'C')
-                            v1, v2 = (r['Valor bono Fonasa'], r['Valor copago']) if prevision == "Fonasa" else (r['Valor particular General'], r['Valor particular preferencial'])
+                            pdf.cell(w[2], 8, str(int(r['Cant'])), 1, 0, 'C')
+                            
+                            v1, v2 = (r['Valor Fonasa Final'], r['Valor Copago Final']) if prevision == "Fonasa" else (r['Valor particular General'], r['Valor particular preferencial'])
                             pdf.cell(w[3], 8, f"${(v1*r['Cant']):,.0f}", 1, 0, 'R'); pdf.cell(w[4], 8, f"${(v2*r['Cant']):,.0f}", 1, 1, 'R')
                         
                         pdf.set_font("Arial", 'B', 9); pdf.set_fill_color(240, 240, 240)
@@ -335,7 +353,7 @@ elif st.session_state.paso == 'formulario':
                         pdf.set_font("Arial", '', 7); pdf.cell(0, 4, "- Av. Vitacura #8620, Comuna de Vitacura.", ln=True)
                         pdf.cell(0, 4, "- Sitio Web: www.policlinicotabancura.cl", ln=True)
                         pdf.ln(2); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "INDICACIONES IMPORTANTES:", ln=True)
-                        pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. \n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.\n- Si el examen no es cubierto por Fonasa, aparecerá el valor a pagar en la columna copago.")
+                        pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. \n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.\n- Si el examen no es cubierto por Fonasa, aparecerá el valor a pagar en la columna copago.\n- Tu salud es lo primero. Asegura un diagnóstico preciso revisando tus exámenes con nuestro médico general.")
                         
                         path = f"Cot_{folio}.pdf"; pdf.output(path); st.session_state.pdf_path = path; st.session_state.pdf_generado = True; st.rerun()
 
@@ -346,9 +364,9 @@ elif st.session_state.paso == 'formulario':
             st.markdown("---")
             cf1, cf2, cf3 = st.columns(3)
             with cf1:
-                if st.button("🔄 Nueva Cotización", use_container_width=True): st.session_state.update({"seleccionados": [], "cantidades": {}, "pdf_generado": False}); st.rerun()
+                if st.button("🔄 Nueva Cotización", use_container_width=True): st.session_state.update({"seleccionados": [], "cantidades": {}, "pdf_generado": False, "ms_key": st.session_state.ms_key + 1}); st.rerun()
             with cf2:
-                if st.button("🏠 Inicio", use_container_width=True): st.session_state.update({"paso": "busqueda", "pdf_generado": False, "seleccionados": [], "cantidades": {}}); st.rerun()
+                if st.button("🏠 Inicio", use_container_width=True): st.session_state.update({"paso": "busqueda", "pdf_generado": False, "seleccionados": [], "cantidades": {}, "ms_key": st.session_state.ms_key + 1}); st.rerun()
             with cf3:
                 st.link_button("🌐 policlinicotabancura.cl", "https://www.policlinicotabancura.cl", use_container_width=True)
 
