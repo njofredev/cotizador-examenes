@@ -22,6 +22,12 @@ st.markdown("""
         max-width: 850px !important;
         padding-top: 2rem !important;
     }
+    .logo-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+        padding-top: 2rem; /* AJUSTE: Padding superior para que no rebote con el borde */
+    }
     .exam-card {
         background-color: white;
         border: 1px solid #eef2f6;
@@ -82,12 +88,11 @@ st.markdown("""
     }
 
     /* --- SOLUCIÓN PARA LA TABLA WEB --- */
-    /* Forzamos que la columna de texto se trunque con puntos suspensivos */
     [data-testid="stDataFrame"] td:nth-child(2) p {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 350px; /* Ancho máximo para el nombre del examen en web */
+        max-width: 350px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -158,7 +163,9 @@ def cargar_datos():
 if os.path.exists("logo_vec.svg"):
     col_l, col_c, col_r = st.columns([1, 0.4, 1])
     with col_c:
+        st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
         st.image("logo_vec.svg", width=100)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>Cotizador digital de exámenes</h2>", unsafe_allow_html=True)
 st.divider()
@@ -259,10 +266,8 @@ elif st.session_state.paso == 'formulario':
 
             st.markdown("---")
             df_disp = df_sel.copy()
-            # Renombrado de columnas para la vista web (más corto)
             res_c = ["Cant", "Nombre", "Fonasa (Tot)", "Copago (Tot)"] if prevision == "Fonasa" else ["Cant", "Nombre", "P.Gral (Tot)", "P.Pref (Tot)"]
             
-            # Asignación de valores y renombrado
             if prevision == "Fonasa":
                 df_disp["Fonasa (Tot)"] = df_disp["Valor bono Fonasa"] * df_disp["Cant"]
                 df_disp["Copago (Tot)"] = df_disp["Valor copago"] * df_disp["Cant"]
@@ -270,15 +275,13 @@ elif st.session_state.paso == 'formulario':
                 df_disp["P.Gral (Tot)"] = df_disp["Valor particular General"] * df_disp["Cant"]
                 df_disp["P.Pref (Tot)"] = df_disp["Valor particular preferencial"] * df_disp["Cant"]
 
-            # --- CONFIGURACIÓN DE COLUMNAS DE LA TABLA WEB ---
-            # Forzamos anchos fijos para que el nombre se trunque y los valores se vean
             st.dataframe(
                 df_disp[res_c], 
                 use_container_width=True, 
                 hide_index=True,
                 column_config={
                     "Cant": st.column_config.NumberColumn(width="small"),
-                    "Nombre": st.column_config.TextColumn(width="large"), # CSS truncará este
+                    "Nombre": st.column_config.TextColumn(width="large"),
                     res_c[2]: st.column_config.NumberColumn(format="$%d", width="medium"),
                     res_c[3]: st.column_config.NumberColumn(format="$%d", width="medium")
                 }
@@ -308,16 +311,14 @@ elif st.session_state.paso == 'formulario':
                         pdf.cell(0, 6, f"Edad: {calcular_edad(fecha_nac)} años", ln=1)
                         pdf.cell(0, 6, f"Previsión: {prevision}", ln=1); pdf.ln(5)
                         
-                        # PDF mantiene nombres largos de cabecera
-                        h3, h4 = ("Bono Tot", "Copago Tot") if prevision == "Fonasa" else ("P. Gral Tot", "P. Pref Tot")
+                        # AJUSTE: Nombres de columnas actualizados en el PDF
+                        h3, h4 = ("Valor Fonasa", "Copago (valor a pagar)") if prevision == "Fonasa" else ("Valor Gral.", "Valor Pref.")
                         pdf.set_fill_color(2, 112, 249); pdf.set_text_color(255); pdf.set_font("Arial", 'B', 8)
                         w = [12, 88, 15, 37.5, 37.5]
                         for i, h in enumerate(["Cant", "Examen", "Cod", h3, h4]): pdf.cell(w[i], 10, h, 1, 0, 'C', True)
                         pdf.ln(); pdf.set_text_color(0); pdf.set_font("Arial", '', 8)
-                        # Truncado para PDF si el nombre es EXTREMADAMENTE largo, pero mantenemos lógica original
                         for _, r in df_sel.iterrows():
                             pdf.cell(w[0], 8, str(int(r['Cant'])), 1, 0, 'C')
-                            # Truncado suave para PDF para que no se superponga
                             nombre_pdf = str(r['Nombre'])
                             if len(nombre_pdf) > 48: nombre_pdf = nombre_pdf[:45] + "..."
                             pdf.cell(w[1], 8, f" {nombre_pdf}", 1)
