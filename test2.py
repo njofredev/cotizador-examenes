@@ -7,6 +7,7 @@ import string
 import uuid
 from datetime import date, datetime
 import psycopg2
+import pytz  # Librería para controlar la zona horaria
 
 # 1. Configuración de página y CSS
 st.set_page_config(
@@ -105,6 +106,10 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- Funciones Core ---
+def obtener_ahora_chile():
+    tz = pytz.timezone('America/Santiago')
+    return datetime.now(tz)
+
 def calcular_edad(fecha_nacimiento):
     today = date.today()
     return today.year - fecha_nacimiento.year - ((today.month, today.day) < (fecha_nacimiento.month, fecha_nacimiento.day))
@@ -146,11 +151,12 @@ def guardar_en_db(folio, nombre, t_doc, doc_id, f_nac, t_f, t_c, t_pg, t_pp):
     if conn:
         try:
             cur = conn.cursor()
+            ahora = obtener_ahora_chile()
             cur.execute("""
                 INSERT INTO cotizaciones (id, folio, nombre_paciente, tipo_documento, documento_id, 
                 fecha_nacimiento, fecha_cotizacion, total_fonasa, total_copago, total_particular_gral, total_particular_pref
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (str(uuid.uuid4()), folio, nombre, t_doc, doc_id, f_nac, datetime.now(), int(t_f), int(t_c), int(t_pg), int(t_pp)))
+            """, (str(uuid.uuid4()), folio, nombre, t_doc, doc_id, f_nac, ahora, int(t_f), int(t_c), int(t_pg), int(t_pp)))
             conn.commit(); conn.close(); return True
         except: return False
     return False
@@ -215,7 +221,18 @@ elif st.session_state.paso == 'formulario':
             st.markdown("#### 👤 Datos del Paciente")
             nombre_p = st.text_input("Nombre Completo", value=st.session_state.nombre_sugerido, disabled=st.session_state.pdf_generado)
             f1, f2 = st.columns(2)
-            fecha_nac = f1.date_input("Fecha de Nacimiento", value=date(1990, 1, 1), disabled=st.session_state.pdf_generado)
+            
+            # --- CORRECCIÓN DEL DATEPICKER ---
+            # Se añade min_value y max_value para cubrir el rango 1900-2026
+            fecha_nac = f1.date_input(
+                "Fecha de Nacimiento", 
+                value=date(1990, 1, 1), 
+                min_value=date(1900, 1, 1), 
+                max_value=date(2026, 12, 31),
+                disabled=st.session_state.pdf_generado
+            )
+            # ---------------------------------
+            
             prevision = f2.selectbox("Previsión", ["Seleccione...", "Particular", "Fonasa"], index=(2 if st.session_state.get('prevision_sugerida')=="Fonasa" else (1 if st.session_state.get('prevision_sugerida')=="Particular" else 0)), disabled=st.session_state.pdf_generado)
 
         if not st.session_state.pdf_generado:
@@ -267,7 +284,6 @@ elif st.session_state.paso == 'formulario':
                         st.markdown('</div>', unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
-            # --- Lógica de Negocio (Fallback) ---
             df_sel = df_filtrado[df_filtrado["busqueda"].isin(st.session_state.seleccionados)].copy()
             df_sel["Cant"] = df_sel["busqueda"].map(st.session_state.cantidades).fillna(1).astype(int)
             
@@ -305,7 +321,6 @@ elif st.session_state.paso == 'formulario':
             m1, m2 = st.columns(2)
             if prevision == "Fonasa":
                 m1.metric("Total Bono", f"${t_f:,.0f}"); m2.metric("Total Copago a Pagar", f"${t_c:,.0f}")
-                # NUEVA NOTA SOLICITADA
                 st.markdown('<p class="nota-fonasa">Si el exámen cotizado no es cubierto por Fonasa, el valor a pagar corresponde a la segunda columna de Total calculada.</p>', unsafe_allow_html=True)
             else:
                 m1.metric("Total P. Gral", f"${t_pg:,.0f}"); m2.metric("Total P. Pref", f"${t_pp:,.0f}")
@@ -313,8 +328,11 @@ elif st.session_state.paso == 'formulario':
             if not st.session_state.pdf_generado:
                 if st.button("🚀 Generar PDF", use_container_width=True):
                     folio = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+                    
+                    ahora_chile = obtener_ahora_chile()
+                    timestamp_emision = ahora_chile.strftime("%d/%m/%Y %H:%M:%S")
+
                     if guardar_en_db(folio, nombre_p, st.session_state.tipo_doc_sesion, st.session_state.doc_id_sesion, fecha_nac, t_f, t_c, t_pg, t_pp):
-                        timestamp_emision = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
                         pdf = FPDF()
                         pdf.add_page()
                         if os.path.exists("logo_vec.svg"): pdf.image("logo_vec.svg", x=10, y=8, w=15)
@@ -353,7 +371,7 @@ elif st.session_state.paso == 'formulario':
                         pdf.set_font("Arial", '', 7); pdf.cell(0, 4, "- Av. Vitacura #8620, Comuna de Vitacura.", ln=True)
                         pdf.cell(0, 4, "- Sitio Web: www.policlinicotabancura.cl", ln=True)
                         pdf.ln(2); pdf.set_font("Arial", 'B', 8); pdf.cell(0, 5, "INDICACIONES IMPORTANTES:", ln=True)
-                        pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. \n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.\n- Si el examen no es cubierto por Fonasa, aparecerá el valor a pagar en la columna copago.\n- Obtén claridad sobre tus resultados con la evaluación experta de nuestros equipos de medicina general.")
+                        pdf.set_font("Arial", '', 7); pdf.multi_cell(0, 4, f"- Folio: {folio}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. \n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.\n- Si el examen no es cubierto por Fonasa, aparecerá el valor a pagar en la columna copago.\n- Obtén claridad sobre tus resultados con la evaluación experta de nuestro equipo de medicina general.")
                         
                         path = f"Cot_{folio}.pdf"; pdf.output(path); st.session_state.pdf_path = path; st.session_state.pdf_generado = True; st.rerun()
 
@@ -368,7 +386,7 @@ elif st.session_state.paso == 'formulario':
             with cf2:
                 if st.button("🏠 Inicio", use_container_width=True): st.session_state.update({"paso": "busqueda", "pdf_generado": False, "seleccionados": [], "cantidades": {}, "ms_key": st.session_state.ms_key + 1}); st.rerun()
             with cf3:
-                st.link_button("🌐 policlinicotabancura.cl", "https://www.policlinicotabancura.cl", use_container_width=True)
+                st.link_button("🌐 Sitio web", "https://www.policlinicotabancura.cl", use_container_width=True)
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 f_col1, f_col2, f_col3 = st.columns(3)
