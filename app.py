@@ -455,7 +455,7 @@ elif st.session_state.paso == 'formulario':
             
             st.markdown("---")
             
-            if st.button("🔄 nueva cotización", width="stretch"):
+            if st.button("🔄 Generar nueva cotización", width="stretch"):
                 st.session_state.update({"seleccionados": [], "cantidades": {}, "pdf_generado": False, "ms_key": st.session_state.ms_key + 1, "pack_activo": None})
                 st.rerun()
 
