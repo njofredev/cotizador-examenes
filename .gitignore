@@ -208,3 +208,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# Custom ignores (Red dots in request)
+.streamlit/secrets.toml
+database.py
+db_report.md
+diag_db.py
+firma_dr.png
+inspect_db.py
+main*.py
+pack_utf8.txt
+test*.py
+*.pdf
+
+# Allow these files (Green dots in request)
+!aranceles.xlsx
+!pack-examenes.xlsx
+!logo.png
+!firma_prado.png
