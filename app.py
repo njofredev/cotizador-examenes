@@ -17,8 +17,20 @@ logger = logging.getLogger(__name__)
 # --- FUNCIONES DE BASE DE DATOS (MIGRADO DESDE database.py) ---
 def conectar_db():
     try:
+        # Intentamos usar st.secrets primero (funciona en local con el archivo y en deploy con env vars)
         if "postgres" in st.secrets:
             return psycopg2.connect(**st.secrets["postgres"])
+        
+        # Fallback: Intentar leer variables de entorno directamente si st.secrets no las mapeó
+        host = os.environ.get("STREAMLIT_POSTGRES_HOST") or os.environ.get("POSTGRES_HOST")
+        if host:
+            return psycopg2.connect(
+                host=host,
+                database=os.environ.get("STREAMLIT_POSTGRES_DATABASE") or os.environ.get("POSTGRES_DATABASE", "db_migracion"),
+                user=os.environ.get("STREAMLIT_POSTGRES_USER") or os.environ.get("POSTGRES_USER", "postgres"),
+                password=os.environ.get("STREAMLIT_POSTGRES_PASSWORD") or os.environ.get("POSTGRES_PASSWORD"),
+                port=os.environ.get("STREAMLIT_POSTGRES_PORT") or os.environ.get("POSTGRES_PORT", "5432")
+            )
     except Exception as e:
         logger.error(f"Error conectando a la base de datos: {e}")
     return None
@@ -260,7 +272,7 @@ if st.session_state.paso == 'busqueda':
         st.markdown("##### 🔍 Ingresa tu rut o documento extranjero")
         tipo_doc_busq = st.radio("Documento", ["RUT Nacional", "Pasaporte / ID"], horizontal=True, help="Selecciona si tienes RUT chileno o Pasaporte extranjero.")
         doc_id_input = st.text_input("Ingresa tu identificación:", help="Ingresa tu documento (ej: 12345678-9). Si ingresas un RUT existente se cargarán tus datos históricos.")
-        if st.button("Ingresar", use_container_width=True):
+        if st.button("Ingresar", width="stretch"):
             if doc_id_input:
                 st.session_state.doc_id_sesion, st.session_state.tipo_doc_sesion = doc_id_input, tipo_doc_busq
                 
@@ -314,7 +326,7 @@ elif st.session_state.paso == 'formulario':
                 p_cols = st.columns(4)
                 for i, (p_name, p_data) in enumerate(PACKS.items()):
                     with p_cols[i % 4]:
-                        if st.button(p_name, key=f"pk_{i}", use_container_width=True, type="primary"):
+                        if st.button(p_name, key=f"pk_{i}", width="stretch", type="primary"):
                             st.session_state.seleccionados = []
                             st.session_state.cantidades = {}
                             st.session_state.pack_activo = p_name
@@ -371,7 +383,7 @@ elif st.session_state.paso == 'formulario':
                     df_disp["P.Gral (Tot)"], df_disp["P.Pref (Tot)"] = df_sel["P. Gral"], df_sel["P. Pref"]
                 st.dataframe(
                     df_disp[res_c], 
-                    use_container_width=True, 
+                    width="stretch", 
                     hide_index=True,
                     column_config={
                         "Cant": st.column_config.NumberColumn("Cant", width="small"),
@@ -390,7 +402,7 @@ elif st.session_state.paso == 'formulario':
                     m1.metric("Total P. Gral", f"${t_pg:,.0f}"); m2.metric("Total P. Pref", f"${t_pp:,.0f}")
 
                 if not st.session_state.pdf_generado:
-                    if st.button("🚀 Generar PDF", use_container_width=True):
+                    if st.button("🚀 Generar PDF", width="stretch"):
                         folio = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
                         ahora_chile = obtener_ahora_chile()
                         timestamp_emision = ahora_chile.strftime("%d/%m/%Y %H:%M:%S")
@@ -409,22 +421,22 @@ elif st.session_state.paso == 'formulario':
         if st.session_state.pdf_generado:
             st.success("✅ Cotización finalizada con éxito.")
             
-            if st.button("✏️ Editar cotización", use_container_width=True):
+            if st.button("✏️ Editar cotización", width="stretch"):
                 st.session_state.pdf_generado = False
                 st.rerun()
 
             with open(st.session_state.pdf_path, "rb") as f:
-                st.download_button("🔵 Descargar cotización", f, file_name=f"Cotizacion_{nombre_p}.pdf", use_container_width=True)
+                st.download_button("🔵 Descargar cotización", f, file_name=f"Cotizacion_{nombre_p}.pdf", width="stretch")
             
             st.markdown("---")
             
-            if st.button("🔄 nueva cotización", use_container_width=True):
+            if st.button("🔄 nueva cotización", width="stretch"):
                 st.session_state.update({"seleccionados": [], "cantidades": {}, "pdf_generado": False, "ms_key": st.session_state.ms_key + 1, "pack_activo": None})
                 st.rerun()
 
             st.markdown("---")
 
-            st.link_button("📅 Agendar hora Toma de muestras", "https://ff.healthatom.io/FKV7ZY", use_container_width=True)
+            st.link_button("📅 Agendar hora Toma de muestras", "https://ff.healthatom.io/FKV7ZY", width="stretch")
 
 # FOOTER
 st.markdown("<br><br>", unsafe_allow_html=True)
