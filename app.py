@@ -16,15 +16,8 @@ logger = logging.getLogger(__name__)
 
 # --- FUNCIONES DE BASE DE DATOS (MIGRADO DESDE database.py) ---
 def conectar_db():
+    # 1. Prioridad: Variables de entorno directas (lo más robusto en Docker/Coolify)
     try:
-        # Intentamos usar st.secrets primero
-        if "postgres" in st.secrets:
-            # Añadimos un pequeño timeout para no bloquear el despliegue
-            params = dict(st.secrets["postgres"])
-            if "connect_timeout" not in params: params["connect_timeout"] = 5
-            return psycopg2.connect(**params), None
-        
-        # Fallback: Variables de entorno
         host = os.environ.get("STREAMLIT_POSTGRES_HOST") or os.environ.get("POSTGRES_HOST")
         if host:
             return psycopg2.connect(
@@ -35,16 +28,28 @@ def conectar_db():
                 port=os.environ.get("STREAMLIT_POSTGRES_PORT") or os.environ.get("POSTGRES_PORT", "5432"),
                 connect_timeout=5
             ), None
-            
-        return None, "No se encontraron credenciales (secrets o env vars)."
-    except Exception as e:
-        logger.error(f"Error conectando a la base de datos: {e}")
-        return None, str(e)
+    except Exception as e_env:
+        # Si falló la env var pero había una, retornamos el error
+        if os.environ.get("POSTGRES_HOST") or os.environ.get("STREAMLIT_POSTGRES_HOST"):
+            return None, f"Error env var: {str(e_env)}"
+
+    # 2. Intento secundario: st.secrets (Local o Streamlit Cloud)
+    try:
+        # Usamos getattr o un chequeo manual para evitar la excepción ruidosa de Streamlit
+        if hasattr(st, "secrets") and "postgres" in st.secrets:
+            params = dict(st.secrets["postgres"])
+            if "connect_timeout" not in params: params["connect_timeout"] = 5
+            return psycopg2.connect(**params), None
+    except Exception:
+        pass # Ignoramos errores de secrets si no están presentes
+
+    return None, "No se encontraron credenciales válidas en el sistema."
 
 def guardar_en_db(folio, nombre, t_doc, doc_id, f_nac, t_f, t_c, t_pg, t_pp, df_detalle, prevision):
     conn, err = conectar_db()
     if not conn:
         st.error(f"❌ Error de conexión: {err}")
+        st.info("💡 Asegúrate de configurar las variables de entorno (POSTGRES_HOST, etc.) en el panel de Coolify.")
         return False
         
     try:
