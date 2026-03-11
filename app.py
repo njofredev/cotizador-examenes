@@ -372,7 +372,15 @@ elif st.session_state.paso == 'formulario':
                 if not st.session_state.pack_activo:
                     st.markdown("<br>", unsafe_allow_html=True)
                     st.markdown("#### 🔍 Exámenes individuales")
-                    st.multiselect("➕ Agregar o quitar exámenes individualmente:", options=df_filtrado["busqueda"].unique().tolist(), default=[s for s in st.session_state.seleccionados if s in df_filtrado["busqueda"].values], key=f"ms_{st.session_state.ms_key}", on_change=lambda: st.session_state.update({"seleccionados": st.session_state[f"ms_{st.session_state.ms_key}"], "pack_activo": None}), help="Escribe el nombre del examen o el código Fonasa para buscar agregarlo a la cotización actual.")
+                    st.multiselect(
+                        "➕ Agregar o quitar exámenes individualmente:", 
+                        options=df_filtrado["busqueda"].unique().tolist(), 
+                        default=[s for s in st.session_state.seleccionados if s in df_filtrado["busqueda"].values], 
+                        key=f"ms_{st.session_state.ms_key}", 
+                        max_selections=60,
+                        on_change=lambda: st.session_state.update({"seleccionados": st.session_state[f"ms_{st.session_state.ms_key}"], "pack_activo": None}), 
+                        help="Escribe el nombre del examen o el código Fonasa para buscar agregarlo a la cotización actual. (Máximo 60 exámenes)"
+                    )
 
         if st.session_state.seleccionados:
             # Solo mostramos la lista de seleccionados (con opción de borrar/cantidad) si NO hay un pack activo

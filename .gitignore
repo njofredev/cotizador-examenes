@@ -221,9 +221,11 @@ main*.py
 pack_utf8.txt
 test*.py
 *.pdf
+cleanup_db.py
 
 # Allow these files (Green dots in request)
 !aranceles.xlsx
 !pack-examenes.xlsx
 !logo.png
 !firma_prado.png
+
