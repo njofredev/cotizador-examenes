@@ -317,7 +317,12 @@ if st.session_state.paso == 'busqueda':
 
 elif st.session_state.paso == 'formulario':
     if not st.session_state.pdf_generado:
-        st.button("⬅️ Volver", on_click=lambda: st.session_state.update({"paso": "busqueda"}))
+        st.button("⬅️ Volver", on_click=lambda: st.session_state.update({
+            "paso": "busqueda", 
+            "seleccionados": [], 
+            "cantidades": {}, 
+            "pack_activo": None
+        }))
 
     df_aranceles = cargar_datos()
     if df_aranceles is not None:
