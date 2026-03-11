@@ -179,6 +179,20 @@ st.markdown("""
         background-color: #0156c2;
     }
 
+    /* Botones de Paquetes de Exámenes (Uniformidad y Alineación) */
+    div.stButton button[kind="primary"] {
+        min-height: 85px !important;
+        padding: 5px 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        line-height: 1.2 !important;
+        font-size: 0.95rem !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+
     /* Botón de eliminar en lista de exámenes */
     .btn-del-box button {
         background-color: white !important;
@@ -432,12 +446,12 @@ elif st.session_state.paso == 'formulario':
         if st.session_state.pdf_generado:
             st.success("✅ Cotización finalizada con éxito.")
             
+            with open(st.session_state.pdf_path, "rb") as f:
+                st.download_button("🔵 Descargar cotización y orden médica", f, file_name=f"Cotizacion_{nombre_p}.pdf", width="stretch")
+
             if st.button("✏️ Editar cotización", width="stretch"):
                 st.session_state.pdf_generado = False
                 st.rerun()
-
-            with open(st.session_state.pdf_path, "rb") as f:
-                st.download_button("🔵 Descargar cotización", f, file_name=f"Cotizacion_{nombre_p}.pdf", width="stretch")
             
             st.markdown("---")
             
