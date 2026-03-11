@@ -17,11 +17,14 @@ logger = logging.getLogger(__name__)
 # --- FUNCIONES DE BASE DE DATOS (MIGRADO DESDE database.py) ---
 def conectar_db():
     try:
-        # Intentamos usar st.secrets primero (funciona en local con el archivo y en deploy con env vars)
+        # Intentamos usar st.secrets primero
         if "postgres" in st.secrets:
-            return psycopg2.connect(**st.secrets["postgres"])
+            # Añadimos un pequeño timeout para no bloquear el despliegue
+            params = dict(st.secrets["postgres"])
+            if "connect_timeout" not in params: params["connect_timeout"] = 5
+            return psycopg2.connect(**params), None
         
-        # Fallback: Intentar leer variables de entorno directamente si st.secrets no las mapeó
+        # Fallback: Variables de entorno
         host = os.environ.get("STREAMLIT_POSTGRES_HOST") or os.environ.get("POSTGRES_HOST")
         if host:
             return psycopg2.connect(
@@ -29,16 +32,19 @@ def conectar_db():
                 database=os.environ.get("STREAMLIT_POSTGRES_DATABASE") or os.environ.get("POSTGRES_DATABASE", "db_migracion"),
                 user=os.environ.get("STREAMLIT_POSTGRES_USER") or os.environ.get("POSTGRES_USER", "postgres"),
                 password=os.environ.get("STREAMLIT_POSTGRES_PASSWORD") or os.environ.get("POSTGRES_PASSWORD"),
-                port=os.environ.get("STREAMLIT_POSTGRES_PORT") or os.environ.get("POSTGRES_PORT", "5432")
-            )
+                port=os.environ.get("STREAMLIT_POSTGRES_PORT") or os.environ.get("POSTGRES_PORT", "5432"),
+                connect_timeout=5
+            ), None
+            
+        return None, "No se encontraron credenciales (secrets o env vars)."
     except Exception as e:
         logger.error(f"Error conectando a la base de datos: {e}")
-    return None
+        return None, str(e)
 
 def guardar_en_db(folio, nombre, t_doc, doc_id, f_nac, t_f, t_c, t_pg, t_pp, df_detalle, prevision):
-    conn = conectar_db()
+    conn, err = conectar_db()
     if not conn:
-        st.error("No se pudo establecer conexión con la base de datos remota.")
+        st.error(f"❌ Error de conexión: {err}")
         return False
         
     try:
@@ -83,7 +89,7 @@ def guardar_en_db(folio, nombre, t_doc, doc_id, f_nac, t_f, t_c, t_pg, t_pp, df_
         return False
 
 def obtener_datos_paciente(doc_id):
-    conn = conectar_db()
+    conn, err = conectar_db()
     if not conn: return None
     try:
         cur = conn.cursor()
