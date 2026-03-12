@@ -111,6 +111,34 @@ def obtener_datos_paciente(doc_id):
     except Exception as e:
         logger.error(f"Error al buscar paciente: {e}")
     return None
+
+def guardar_orden_db(folio_om, folio_cot, doc_id, df_detalle):
+    conn, err = conectar_db()
+    if not conn: return False
+    try:
+        cur = conn.cursor()
+        ahora = obtener_ahora_chile()
+        
+        # 1. Insertar cabecera de la orden
+        cur.execute("""INSERT INTO ordenes_clinicas (folio_orden, folio_cotizacion_origen, rut_paciente, fecha_creacion, estado)
+                    VALUES (%s, %s, %s, %s, %s)""",
+                    (folio_om, folio_cot, doc_id, ahora, "Generada"))
+        
+        # 2. Insertar detalles
+        if df_detalle is not None and not df_detalle.empty:
+            for _, row in df_detalle.iterrows():
+                cur.execute("""INSERT INTO ordenes_detalles (folio_orden, codigo_examen, nombre_examen)
+                            VALUES (%s, %s, %s)""",
+                            (folio_om, str(row.get('Código', 'n/a')), str(row.get('Nombre', 'Examen'))))
+        
+        conn.commit()
+        logger.info(f"📋 Orden Médica {folio_om} guardada exitosamente.")
+        cur.close(); conn.close()
+        return True
+    except Exception as e:
+        if conn: conn.rollback()
+        logger.error(f"Error al guardar orden en BD: {e}")
+        return False
 # -------------------------------------------------------------
 
 # 1. Configuración de página y CSS
@@ -515,6 +543,10 @@ elif st.session_state.paso == 'formulario':
                             
                             # La orden médica solo se incluye si hay un pack activo
                             incluir_om = st.session_state.pack_activo is not None
+                            
+                            # Si hay orden médica, también la guardamos en sus tablas correspondientes
+                            if incluir_om:
+                                guardar_orden_db(folio_om, folio_cot, st.session_state.doc_id_sesion, df_sel)
                             
                             path = generar_cotizacion_pdf(
                                 folio_cot, folio_om, timestamp_emision, nombre_p, 
