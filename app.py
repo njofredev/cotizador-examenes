@@ -503,16 +503,24 @@ elif st.session_state.paso == 'formulario':
 
                 if not st.session_state.pdf_generado:
                     if st.button("🚀 Generar PDF", width="stretch"):
-                        folio = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+                        # Generamos dos folios diferentes
+                        folio_cot = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+                        folio_om = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+                        
                         ahora_chile = obtener_ahora_chile()
                         timestamp_emision = ahora_chile.strftime("%d/%m/%Y %H:%M:%S")
 
-                        if guardar_en_db(folio, nombre_p, st.session_state.tipo_doc_sesion, st.session_state.doc_id_sesion, fecha_nac, t_f, t_c, t_pg, t_pp, df_sel, prevision):
+                        # Guardamos en DB usando el folio de la cotización como referencia principal
+                        if guardar_en_db(folio_cot, nombre_p, st.session_state.tipo_doc_sesion, st.session_state.doc_id_sesion, fecha_nac, t_f, t_c, t_pg, t_pp, df_sel, prevision):
+                            
+                            # La orden médica solo se incluye si hay un pack activo
+                            incluir_om = st.session_state.pack_activo is not None
                             
                             path = generar_cotizacion_pdf(
-                                folio, timestamp_emision, nombre_p, 
+                                folio_cot, folio_om, timestamp_emision, nombre_p, 
                                 st.session_state.doc_id_sesion, fecha_nac, prevision, 
-                                df_sel, t_f, t_c, t_pg, t_pp, st.session_state.pack_activo
+                                df_sel, t_f, t_c, t_pg, t_pp, 
+                                st.session_state.pack_activo, incluir_om
                             )
                             
                             st.session_state.pdf_path, st.session_state.pdf_generado = path, True
@@ -522,11 +530,13 @@ elif st.session_state.paso == 'formulario':
             st.success("✅ Cotización finalizada con éxito.")
             
             with open(st.session_state.pdf_path, "rb") as f:
-                st.download_button("🔵 Descargar cotización y orden médica", f, file_name=f"Cotizacion_{nombre_p}.pdf", width="stretch")
+                st.download_button("🔵 Descargar cotización y orden médica" if st.session_state.pack_activo else "🔵 Descargar cotización", f, file_name=f"Cotizacion_{nombre_p}.pdf", width="stretch")
 
-            if st.button("✏️ Editar cotización", width="stretch"):
-                st.session_state.pdf_generado = False
-                st.rerun()
+            # Solo permitimos editar si NO es un pack (para no romper la integridad del paquete preventivo)
+            if not st.session_state.pack_activo:
+                if st.button("✏️ Editar cotización", width="stretch"):
+                    st.session_state.pdf_generado = False
+                    st.rerun()
             
             st.markdown("---")
             
