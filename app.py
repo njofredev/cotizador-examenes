@@ -139,6 +139,40 @@ def guardar_orden_db(folio_om, folio_cot, doc_id, df_detalle):
         if conn: conn.rollback()
         logger.error(f"Error al guardar orden en BD: {e}")
         return False
+
+def validar_rut(rut):
+    """Limpia y valida un RUT chileno (format xxxxxxxx-x)."""
+    rut = rut.replace(".", "").replace("-", "").strip().upper()
+    if not rut or len(rut) < 2: return False
+    
+    cuerpo = rut[:-1]
+    dv = rut[-1]
+    
+    if not cuerpo.isdigit(): return False
+    
+    # Validacion modulo 11
+    suma = 0
+    multiplicador = 2
+    for c in reversed(cuerpo):
+        suma += int(c) * multiplicador
+        multiplicador = multiplicador + 1 if multiplicador < 7 else 2
+    
+    dv_esperado = 11 - (suma % 11)
+    if dv_esperado == 11: dv_esperado = '0'
+    elif dv_esperado == 10: dv_esperado = 'K'
+    else: dv_esperado = str(dv_esperado)
+    
+    if dv == dv_esperado:
+        # Formatear como xxxxxxxx-x
+        return f"{cuerpo}-{dv}"
+    return False
+
+def validar_extranjero(doc):
+    """Limpia y valida documento extranjero (max 10 caracteres)."""
+    doc = doc.replace(".", "").replace("-", " ").strip().upper()
+    if 0 < len(doc) <= 10:
+        return doc
+    return False
 # -------------------------------------------------------------
 
 # 1. Configuración de página y CSS
@@ -378,10 +412,21 @@ if st.session_state.paso == 'busqueda':
         doc_id_input = st.text_input("Ingresa tu identificación:", help="Ingresa tu documento (ej: 12345678-9). Si ingresas un RUT existente se cargarán tus datos históricos.")
         if st.button("Ingresar", width="stretch"):
             if doc_id_input:
-                st.session_state.doc_id_sesion, st.session_state.tipo_doc_sesion = doc_id_input, tipo_doc_busq
+                doc_validado = False
+                if tipo_doc_busq == "RUT Nacional":
+                    doc_validado = validar_rut(doc_id_input)
+                    if not doc_validado:
+                        st.error("❌ RUT inválido. Por favor ingresa un formato correcto (ej: 12345678-9)")
+                else:
+                    doc_validado = validar_extranjero(doc_id_input)
+                    if not doc_validado:
+                        st.error("❌ Identificación inválida o demasiado larga (máx 10 caracteres).")
                 
-                # Intentar recuperar datos del paciente
-                datos = obtener_datos_paciente(doc_id_input)
+                if doc_validado:
+                    st.session_state.doc_id_sesion, st.session_state.tipo_doc_sesion = doc_validado, tipo_doc_busq
+                    
+                    # Intentar recuperar datos del paciente con el ID normalizado
+                    datos = obtener_datos_paciente(doc_validado)
                 if datos:
                     st.session_state.p_nombre = datos["nombre"] or ""
                     st.session_state.p_fecha_nac = datos["fecha_nacimiento"] or date(1990, 1, 1)
