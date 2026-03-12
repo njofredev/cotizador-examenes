@@ -270,6 +270,33 @@ def cargar_datos():
         st.error(f"Error cargando los datos: {e}")
         return None
 
+def aplicar_pack(pack, df_filtrado):
+    st.session_state.seleccionados = []
+    st.session_state.cantidades = {}
+    st.session_state.pack_activo = pack["nombre"]
+    
+    for p_item in pack["examenes"]:
+        cod = str(p_item["codigo"]) if p_item["codigo"] else None
+        nom = p_item["nombre"]
+        qty = p_item["cantidad"]
+        
+        match = pd.DataFrame()
+        if cod and cod != "HOMA":
+            match = df_filtrado[df_filtrado["Código"] == cod]
+        
+        if match.empty:
+            match = df_filtrado[df_filtrado["Nombre"].str.contains(nom, case=False, na=False)]
+        
+        if not match.empty:
+            it = match.iloc[0]["busqueda"]
+            if it not in st.session_state.seleccionados: st.session_state.seleccionados.append(it)
+            st.session_state.cantidades[it] = qty
+        else:
+            logger.warning(f"No se encontró el examen del pack: {nom} ({cod})")
+    
+    st.session_state.ms_key += 1
+    st.rerun()
+
 # --- UI Principal ---
 if os.path.exists("logo_vec.svg"):
     col_l, col_c, col_r = st.columns([1, 0.4, 1])
@@ -287,6 +314,29 @@ if 'cantidades' not in st.session_state: st.session_state.cantidades = {}
 if 'pdf_generado' not in st.session_state: st.session_state.pdf_generado = False
 if 'ms_key' not in st.session_state: st.session_state.ms_key = 0
 if 'pack_activo' not in st.session_state: st.session_state.pack_activo = None
+
+# Inyectamos JS para detectar si es móvil basándonos en el ancho de pantalla
+# Esto seteará una clase o podemos usar media queries en CSS para ocultar/mostrar elementos
+st.markdown("""
+<script>
+    const isMobile = window.innerWidth <= 768;
+    parent.postMessage({type: 'streamlit:set_mobile', value: isMobile}, '*');
+</script>
+""", unsafe_allow_html=True)
+
+# CSS para ocultar condicionalmente según el ancho (más robusto que JS en Streamlit)
+st.markdown("""
+<style>
+    /* Por defecto ocultamos la versión móvil */
+    .mobile-only { display: none; }
+    .desktop-only { display: block; }
+
+    @media (max-width: 768px) {
+        .mobile-only { display: block !important; }
+        .desktop-only { display: none !important; }
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Cargar packs desde JSON
 if 'packs_json' not in st.session_state:
@@ -362,37 +412,27 @@ elif st.session_state.paso == 'formulario':
                 st.warning("⚠️ Debes rellenar tu Nombre Completo y seleccionar tu Previsión antes de comenzar a cotizar exámenes.")
             else:
                 st.markdown("#### 📦 Paquetes de exámenes")
-                st.caption("👈 Selecciona uno de nuestros paquetes preventivos haciendo clic en los botones azules, o arma el tuyo buscando exámenes manualmente en el buscador inferior.")
+                st.caption("👈 Selecciona uno de nuestros paquetes preventivos para cargar los exámenes automáticamente.")
+                
+                # Renderizado Responsivo
+                # 1. Versión Desktop (Botones)
+                st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
                 p_cols = st.columns(4)
                 for i, pack in enumerate(st.session_state.packs_json):
                     p_name = pack["nombre"]
                     with p_cols[i % 4]:
-                        if st.button(p_name, key=f"pk_{i}", width="stretch", type="primary"):
-                            st.session_state.seleccionados = []
-                            st.session_state.cantidades = {}
-                            st.session_state.pack_activo = p_name
-                            
-                            for p_item in pack["examenes"]:
-                                cod = str(p_item["codigo"]) if p_item["codigo"] else None
-                                nom = p_item["nombre"]
-                                qty = p_item["cantidad"]
-                                
-                                match = pd.DataFrame()
-                                if cod and cod != "HOMA":
-                                    match = df_filtrado[df_filtrado["Código"] == cod]
-                                
-                                if match.empty:
-                                    # Respaldo por nombre exacto o aproximado si no hay código
-                                    match = df_filtrado[df_filtrado["Nombre"].str.contains(nom, case=False, na=False)]
-                                
-                                if not match.empty:
-                                    it = match.iloc[0]["busqueda"]
-                                    if it not in st.session_state.seleccionados: st.session_state.seleccionados.append(it)
-                                    st.session_state.cantidades[it] = qty
-                                else:
-                                    logger.warning(f"No se encontró el examen del pack: {nom} ({cod})")
-                                    
-                            st.session_state.ms_key += 1; st.rerun()
+                        if st.button(p_name, key=f"pk_desk_{i}", width="stretch", type="primary"):
+                            aplicar_pack(pack, df_filtrado)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # 2. Versión Mobile (Dropdown)
+                st.markdown('<div class="mobile-only">', unsafe_allow_html=True)
+                pack_names = ["Seleccione un paquete..."] + [p["nombre"] for p in st.session_state.packs_json]
+                selected_p = st.selectbox("Elige un paquete preventivo:", pack_names, key="mobile_pack_sel")
+                if selected_p != "Seleccione un paquete...":
+                    pack_data = next(p for p in st.session_state.packs_json if p["nombre"] == selected_p)
+                    aplicar_pack(pack_data, df_filtrado)
+                st.markdown('</div>', unsafe_allow_html=True)
 
                 # Solo mostramos buscador individual si NO hay un pack activo
                 if not st.session_state.pack_activo:
