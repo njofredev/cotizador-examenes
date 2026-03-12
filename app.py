@@ -315,25 +315,23 @@ if 'pdf_generado' not in st.session_state: st.session_state.pdf_generado = False
 if 'ms_key' not in st.session_state: st.session_state.ms_key = 0
 if 'pack_activo' not in st.session_state: st.session_state.pack_activo = None
 
-# Inyectamos JS para detectar si es móvil basándonos en el ancho de pantalla
-# Esto seteará una clase o podemos usar media queries en CSS para ocultar/mostrar elementos
-st.markdown("""
-<script>
-    const isMobile = window.innerWidth <= 768;
-    parent.postMessage({type: 'streamlit:set_mobile', value: isMobile}, '*');
-</script>
-""", unsafe_allow_html=True)
-
-# CSS para ocultar condicionalmente según el ancho (más robusto que JS en Streamlit)
+# CSS para ocultar condicionalmente según el ancho (Usamos :has para ocultar el contenedor de Streamlit completo)
 st.markdown("""
 <style>
-    /* Por defecto ocultamos la versión móvil */
-    .mobile-only { display: none; }
-    .desktop-only { display: block; }
+    /* Ocultar versión mobile en pantallas grandes */
+    div[data-testid="stVerticalBlock"]:has(> div#mobile-wrapper) {
+        display: none !important;
+    }
 
     @media (max-width: 768px) {
-        .mobile-only { display: block !important; }
-        .desktop-only { display: none !important; }
+        /* Ocultar versión escritorio en pantallas pequeñas */
+        div[data-testid="stVerticalBlock"]:has(> div#desktop-wrapper) {
+            display: none !important;
+        }
+        /* Mostrar versión mobile en pantallas pequeñas */
+        div[data-testid="stVerticalBlock"]:has(> div#mobile-wrapper) {
+            display: block !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -416,23 +414,33 @@ elif st.session_state.paso == 'formulario':
                 
                 # Renderizado Responsivo
                 # 1. Versión Desktop (Botones)
-                st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
-                p_cols = st.columns(4)
-                for i, pack in enumerate(st.session_state.packs_json):
-                    p_name = pack["nombre"]
-                    with p_cols[i % 4]:
-                        if st.button(p_name, key=f"pk_desk_{i}", width="stretch", type="primary"):
-                            aplicar_pack(pack, df_filtrado)
-                st.markdown('</div>', unsafe_allow_html=True)
+                with st.container():
+                    st.markdown('<div id="desktop-wrapper"></div>', unsafe_allow_html=True)
+                    p_cols = st.columns(4)
+                    for i, pack in enumerate(st.session_state.packs_json):
+                        p_name = pack["nombre"]
+                        with p_cols[i % 4]:
+                            if st.button(p_name, key=f"pk_desk_{i}", width="stretch", type="primary"):
+                                aplicar_pack(pack, df_filtrado)
 
                 # 2. Versión Mobile (Dropdown)
-                st.markdown('<div class="mobile-only">', unsafe_allow_html=True)
-                pack_names = ["Seleccione un paquete..."] + [p["nombre"] for p in st.session_state.packs_json]
-                selected_p = st.selectbox("Elige un paquete preventivo:", pack_names, key="mobile_pack_sel")
-                if selected_p != "Seleccione un paquete...":
-                    pack_data = next(p for p in st.session_state.packs_json if p["nombre"] == selected_p)
-                    aplicar_pack(pack_data, df_filtrado)
-                st.markdown('</div>', unsafe_allow_html=True)
+                with st.container():
+                    st.markdown('<div id="mobile-wrapper"></div>', unsafe_allow_html=True)
+                    pack_names = ["Seleccione un paquete..."] + [p["nombre"] for p in st.session_state.packs_json]
+                    # Si ya hay un pack activo, intentamos seleccionarlo en el dropdown
+                    def_idx = 0
+                    if st.session_state.pack_activo:
+                        try:
+                            def_idx = pack_names.index(st.session_state.pack_activo)
+                        except:
+                            def_idx = 0
+                    
+                    selected_p = st.selectbox("Elige un paquete preventivo:", pack_names, index=def_idx, key="mobile_pack_sel")
+                    
+                    # Solo aplicamos si el pack seleccionado es distinto al activo actual
+                    if selected_p != "Seleccione un paquete..." and selected_p != st.session_state.pack_activo:
+                        pack_data = next(p for p in st.session_state.packs_json if p["nombre"] == selected_p)
+                        aplicar_pack(pack_data, df_filtrado)
 
                 # Solo mostramos buscador individual si NO hay un pack activo
                 if not st.session_state.pack_activo:
