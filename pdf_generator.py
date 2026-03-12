@@ -2,21 +2,32 @@ from fpdf import FPDF
 import os
 from utils import calcular_edad
 
+class PDF(FPDF):
+    def __init__(self, folio, timestamp_emision):
+        super().__init__()
+        self.folio = folio
+        self.timestamp_emision = timestamp_emision
+
+    def header(self):
+        if os.path.exists("logo_vec.svg"):
+            self.image("logo_vec.svg", x=10, y=8, w=15)
+        
+        self.set_font("Arial", 'B', 8)
+        self.cell(0, 5, f"FOLIO: {self.folio}", ln=1, align='R')
+        self.set_font("Arial", 'I', 7)
+        self.cell(0, 4, f"Fecha: {self.timestamp_emision}", ln=1, align='R')
+        self.cell(0, 4, f"Página {self.page_no()} de {{nb}}", ln=1, align='R')
+        self.ln(5)
+
 def generar_cotizacion_pdf(folio, timestamp_emision, nombre_p, doc_id, fecha_nac, prevision, df_sel, t_f, t_c, t_pg, t_pp, pack_nombre=None):
-    pdf = FPDF()
+    pdf = PDF(folio, timestamp_emision)
+    pdf.alias_nb_pages()
     pdf.add_page()
-    if os.path.exists("logo_vec.svg"): 
-        pdf.image("logo_vec.svg", x=10, y=8, w=15)
-    
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 10, f"FOLIO: {folio}", ln=1, align='R')
-    pdf.set_font("Arial", 'I', 8)
-    pdf.cell(0, 5, f"Fecha de Emisión: {timestamp_emision}", ln=1, align='R')
     
     pdf.set_font("Arial", 'B', 14)
-    pdf.ln(10)
+    pdf.ln(5)
     pdf.cell(0, 10, "COTIZACIÓN DIGITAL DE EXÁMENES", ln=True, align='C')
-    pdf.ln(10)
+    pdf.ln(5)
     
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(0, 6, "DATOS DEL PACIENTE:", ln=1)
@@ -59,10 +70,7 @@ def generar_cotizacion_pdf(folio, timestamp_emision, nombre_p, doc_id, fecha_nac
         pdf.cell(w[3], 8, f"${(v1*r['Cant']):,.0f}", 1, 0, 'R')
         pdf.cell(w[4], 8, f"${(v2*r['Cant']):,.0f}", 1, 1, 'R')
     
-    pdf.set_font("Arial", 'I', 8)
-    pdf.set_fill_color(255, 255, 255)
     total_items = int(df_sel['Cant'].sum())
-    pdf.ln(6)
     
     pdf.set_font("Arial", 'B', 9)
     pdf.set_fill_color(240, 240, 240)
@@ -90,18 +98,11 @@ def generar_cotizacion_pdf(folio, timestamp_emision, nombre_p, doc_id, fecha_nac
 
     # --- HOJA 2: ORDEN MÉDICA ---
     pdf.add_page()
-    if os.path.exists("logo_vec.svg"): 
-        pdf.image("logo_vec.svg", x=10, y=8, w=15)
-        
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 10, f"FOLIO: {folio}", ln=1, align='R')
-    pdf.set_font("Arial", 'I', 8)
-    pdf.cell(0, 5, f"Fecha de Emisión: {timestamp_emision}", ln=1, align='R')
 
     pdf.set_font("Arial", 'B', 14)
-    pdf.ln(10)
+    pdf.ln(5)
     pdf.cell(0, 10, "ORDEN MÉDICA DE EXÁMENES", ln=True, align='C')
-    pdf.ln(10)
+    pdf.ln(5)
 
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(0, 6, "DATOS DEL PACIENTE:", ln=1)
