@@ -64,16 +64,16 @@ def generar_cotizacion_pdf(folio, timestamp_emision, nombre_p, doc_id, fecha_nac
     total_items = int(df_sel['Cant'].sum())
     pdf.ln(6)
     
-    pdf.set_font("Arial", 'I', 8)
-    pdf.cell(w[0]+w[1]+w[2], 6, f"Total exámenes cotizados: {total_items}", 0, 0, 'R')
-    pdf.ln(6)
-    
     pdf.set_font("Arial", 'B', 9)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(w[0]+w[1]+w[2], 10, "Total estimado a pagar", 1, 0, 'R', True)
     res1, res2 = (t_f, t_c) if prevision == "Fonasa" else (t_pg, t_pp)
     pdf.cell(w[3], 10, f"${res1:,.0f}", 1, 0, 'R', True)
     pdf.cell(w[4], 10, f"${res2:,.0f}", 1, 1, 'R', True)
+
+    pdf.ln(2)
+    pdf.set_font("Arial", 'I', 8)
+    pdf.cell(w[0]+w[1]+w[2], 6, f"Total exámenes cotizados: {total_items}", 0, 1, 'R')
     
     pdf.ln(10)
     pdf.set_font("Arial", 'B', 8)
@@ -133,19 +133,24 @@ def generar_cotizacion_pdf(folio, timestamp_emision, nombre_p, doc_id, fecha_nac
         pdf.cell(w_om[1], 10, f" {nombre_om}", 1)
         pdf.cell(w_om[2], 10, str(int(r['Cant'])), 1, 1, 'C')
 
-    # Firma del Doctor (Centrada al final)
+    # Firma del Doctor (Centrada)
     if os.path.exists("firma_prado.png"):
-        current_y = pdf.get_y()
-        if current_y > 220:
+        # Si queda muy poco espacio (menos de 6cm), saltamos de página
+        if pdf.get_y() > 210:
             pdf.add_page()
+            pdf.ln(10)
+        else:
+            pdf.ln(15)
         
-        pdf.set_y(-65) # 6.5 cm desde el final
+        # Guardamos la posición actual para dibujar la firma
+        current_y = pdf.get_y()
         
-        # Imagen centrada: Ancho pagina 210, imagen aprox 60
-        img_w = 60
-        pdf.image("firma_prado.png", x=(210-img_w)/2, w=img_w)
+        # Imagen centrada
+        img_w = 55
+        pdf.image("firma_prado.png", x=(210-img_w)/2, y=current_y, w=img_w)
         
-        pdf.set_y(-35)
+        # Textos de la firma debajo de la imagen
+        pdf.set_y(current_y + 25)
         pdf.set_font("Arial", 'B', 9)
         pdf.cell(0, 4, "Dr. Cristian Prado Jara", ln=1, align='C')
         pdf.set_font("Arial", '', 9)
