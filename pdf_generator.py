@@ -64,10 +64,13 @@ def generar_cotizacion_pdf(folio, timestamp_emision, nombre_p, doc_id, fecha_nac
     total_items = int(df_sel['Cant'].sum())
     pdf.ln(6)
     
+    pdf.set_font("Arial", 'I', 8)
+    pdf.cell(w[0]+w[1]+w[2], 6, f"Total exámenes cotizados: {total_items}", 0, 0, 'R')
+    pdf.ln(6)
+    
     pdf.set_font("Arial", 'B', 9)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(w[0]+w[1]+w[2], 10, "Total estimado a pagar", 1, 0, 'R', True)
-    pdf.cell(w[0]+w[1]+w[2], 6, f"Total exámenes cotizados: {total_items}", 0, 0, 'R')
     res1, res2 = (t_f, t_c) if prevision == "Fonasa" else (t_pg, t_pp)
     pdf.cell(w[3], 10, f"${res1:,.0f}", 1, 0, 'R', True)
     pdf.cell(w[4], 10, f"${res2:,.0f}", 1, 1, 'R', True)
