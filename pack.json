@@ -1,0 +1,177 @@
+{
+  "packs_examenes": [
+    {
+      "nombre": "Chequeo General",
+      "total": 16,
+      "examenes": [
+        {"codigo": "301041", "nombre": "Hemoglobina glicada A1c", "cantidad": 1},
+        {"codigo": "302034", "nombre": "Perfil lipídico (incluye mediciones de colesterol total, HDL-colesterol y triglicéridos con estimaciones por fórmula de LDL-colesterol, VLDL-colesterol y colesterol no-HDL)", "cantidad": 1},
+        {"codigo": "302075", "nombre": "Perfil Bioquímico (determinación automatizada de 12 parámetros)", "cantidad": 1},
+        {"codigo": "309022", "nombre": "Orina Completa", "cantidad": 1},
+        {"codigo": "302023", "nombre": "Creatinina en sangre", "cantidad": 1},
+        {"codigo": "301045", "nombre": "Hemograma (incluye recuentos de leucocitos, eritrocitos, plaquetas, hemoglobina, hematocrito, fórmula leucocitaria, características de los elementos figurados y velocidad de eritrosedimentación)", "cantidad": 1},
+        {"codigo": "307011", "nombre": "Venosa en adulto", "cantidad": 1},
+        {"codigo": "302678", "nombre": "vitamina D", "cantidad": 1},
+        {"codigo": "302677", "nombre": "Vitamina B12", "cantidad": 1},
+        {"codigo": "302032", "nombre": "Electrolitos plasmáticos (sodio, potasio, cloro) c/u", "cantidad": 3},
+        {"codigo": "303024", "nombre": "Tiroestimulante (TSH), hormona (Adulto, niño o R.N.)", "cantidad": 1},
+        {"codigo": "303027", "nombre": "Tiroxina o tetrayodotironina (T4)", "cantidad": 1},
+        {"codigo": "303028", "nombre": "Triyodotironina (T3)", "cantidad": 1},
+        {"codigo": "302076", "nombre": "Perfil Hepático (incluye tiempo de protrombina, bilirrubina total y conjugada, fosfatasas alcalinas totales, GGT, transaminasas GOT/AST y GPT/ALT)", "cantidad": 1}
+      ]
+    },
+    {
+      "nombre": "Chequeo preventivo adulto mayor +65",
+      "total": 8,
+      "examenes": [
+        {"codigo": "301041", "nombre": "Hemoglobina glicada A1c", "cantidad": 1},
+        {"codigo": "302034", "nombre": "Perfil lipídico (incluye mediciones de colesterol total, HDL-colesterol y triglicéridos con estimaciones por fórmula de LDL-colesterol, VLDL-colesterol y colesterol no-HDL)", "cantidad": 1},
+        {"codigo": "302075", "nombre": "Perfil Bioquímico (determinación automatizada de 12 parámetros)", "cantidad": 1},
+        {"codigo": "309022", "nombre": "Orina Completa", "cantidad": 1},
+        {"codigo": "302023", "nombre": "Creatinina en sangre", "cantidad": 1},
+        {"codigo": "301045", "nombre": "Hemograma (incluye recuentos de leucocitos, eritrocitos, plaquetas, hemoglobina, hematocrito, fórmula leucocitaria, características de los elementos figurados y velocidad de eritrosedimentación)", "cantidad": 1},
+        {"codigo": "306042", "nombre": "V.D.R.L.", "cantidad": 1},
+        {"codigo": "307011", "nombre": "Venosa en adulto", "cantidad": 1}
+      ]
+    },
+    {
+      "nombre": "Chequeo preventivo diabetes e hipertensión",
+      "total": 19,
+      "examenes": [
+        {"codigo": "301041", "nombre": "Hemoglobina glicada A1c", "cantidad": 1},
+        {"codigo": "302034", "nombre": "Perfil lipídico (incluye mediciones de colesterol total, HDL-colesterol y triglicéridos con estimaciones por fórmula de LDL-colesterol, VLDL-colesterol y colesterol no-HDL)", "cantidad": 1},
+        {"codigo": "302075", "nombre": "Perfil Bioquímico (determinación automatizada de 12 parámetros)", "cantidad": 1},
+        {"codigo": "309022", "nombre": "Orina Completa", "cantidad": 1},
+        {"codigo": "302023", "nombre": "Creatinina en sangre", "cantidad": 1},
+        {"codigo": "301045", "nombre": "Hemograma (incluye recuentos de leucocitos, eritrocitos, plaquetas, hemoglobina, hematocrito, fórmula leucocitaria, características de los elementos figurados y velocidad de eritrosedimentación)", "cantidad": 1},
+        {"codigo": "307011", "nombre": "Venosa en adulto", "cantidad": 1},
+        {"codigo": "302032", "nombre": "Electrolitos plasmáticos (sodio, potasio, cloro) c/u", "cantidad": 3},
+        {"codigo": "303024", "nombre": "Tiroestimulante (TSH), hormona (Adulto, niño o R.N.)", "cantidad": 1},
+        {"codigo": "303027", "nombre": "Tiroxina o tetrayodotironina (T4)", "cantidad": 1},
+        {"codigo": "303028", "nombre": "Triyodotironina (T3)", "cantidad": 1},
+        {"codigo": "302076", "nombre": "Perfil Hepático (incluye tiempo de protrombina, bilirrubina total y conjugada, fosfatasas alcalinas totales, GGT, transaminasas GOT/AST y GPT/ALT)", "cantidad": 1},
+        {"codigo": "202424", "nombre": "PROTEINA C REACTIVA ULTRASENSIBLE, mg/L", "cantidad": 1},
+        {"codigo": "302005", "nombre": "Acido úrico, en sangre", "cantidad": 1},
+        {"codigo": "309013", "nombre": "MICROALBUMINURIA (RAC)", "cantidad": 1},
+        {"codigo": "309010", "nombre": "Creatinina cuantitativa en orina (RAC)", "cantidad": 1},
+        {"codigo": "302057", "nombre": "Nitrógeno ureico y/o urea, en sangre", "cantidad": 1}
+      ]
+    },
+    {
+      "nombre": "Detección Diabetes e Insulino Resistencia",
+      "total": 10,
+      "examenes": [
+        {"codigo": "301041", "nombre": "Hemoglobina glicada A1c", "cantidad": 1},
+        {"codigo": "302048", "nombre": "Glucosa, Prueba de Tolerancia a la Glucosa Oral (PTGO), (dos determinaciones; no incluye la glucosa que se administra; incluye el valor de las dos tomas de muestras)", "cantidad": 1},
+        {"codigo": null, "nombre": "Frasco de Glucosa", "cantidad": 1},
+        {"codigo": "307011", "nombre": "Venosa en adulto", "cantidad": 1},
+        {"codigo": "302047", "nombre": "Glicemia basal (Glucosa en sangre)", "cantidad": 1},
+        {"codigo": "309022", "nombre": "Orina Completa", "cantidad": 1},
+        {"codigo": "302034", "nombre": "Perfil lipídico (incluye mediciones de colesterol total, HDL-colesterol y triglicéridos con estimaciones por fórmula de LDL-colesterol, VLDL-colesterol y colesterol no-HDL)", "cantidad": 1},
+        {"codigo": "302005", "nombre": "Acido úrico, en sangre", "cantidad": 1},
+        {"codigo": "202424", "nombre": "PROTEINA C REACTIVA ULTRASENSIBLE, mg/L", "cantidad": 1},
+        {"codigo": "HOMA", "nombre": "HOMA", "cantidad": 1}
+      ]
+    },
+    {
+      "nombre": "Chequeo preventivo mujer menos de 30 años",
+      "total": 18,
+      "examenes": [
+        {"codigo": "302023", "nombre": "Creatinina en sangre", "cantidad": 1},
+        {"codigo": "301045 ", "nombre": "Hemograma (incluye recuentos de leucocitos, eritrocitos, plaquetas, hemoglobina, hematocrito, fórmula leucocitaria, características de los elementos figurados y velocidad de eritrosedimentación)", "cantidad": 1},
+        {"codigo": "306042", "nombre": "V.D.R.L.", "cantidad": 1},
+        {"codigo": "307011", "nombre": "Venosa en adulto", "cantidad": 1},
+        {"codigo": "301041", "nombre": "Hemoglobina glicada A1c", "cantidad": 1},
+        {"codigo": "302034", "nombre": "Perfil lipídico (incluye mediciones de colesterol total, HDL-colesterol y triglicéridos con estimaciones por fórmula de LDL-colesterol, VLDL-colesterol y colesterol no-HDL)", "cantidad": 1},
+        {"codigo": "302032", "nombre": "Electrolitos plasmáticos (sodio, potasio, cloro) c/u", "cantidad": 3},
+        {"codigo": "303024", "nombre": "Tiroestimulante (TSH), hormona (Adulto, niño o R.N.)", "cantidad": 1},
+        {"codigo": "303027", "nombre": "Tiroxina o tetrayodotironina (T4)", "cantidad": 1},
+        {"codigo": "303028", "nombre": "Triyodotironina (T3)", "cantidad": 1},
+        {"codigo": "302076", "nombre": "Perfil Hepático (incluye tiempo de protrombina, bilirrubina total y conjugada, fosfatasas alcalinas totales, GGT, transaminasas GOT/AST y GPT/ALT)", "cantidad": 1},
+        {"codigo": "306169", "nombre": "Anticuerpos virales, determ. de H.I.V.", "cantidad": 1},
+        {"codigo": "302075", "nombre": "Perfil Bioquímico (determinación automatizada de 12 parámetros)", "cantidad": 1},
+        {"codigo": "302678", "nombre": "vitamina D", "cantidad": 1},
+        {"codigo": "302677", "nombre": "Vitamina B12", "cantidad": 1},
+        {"codigo": "309022", "nombre": "Orina Completa", "cantidad": 1}
+      ]
+    },
+    {
+      "nombre": "Chequeo preventivo mujer mas de 40 años",
+      "total": 19,
+      "examenes": [
+        {"codigo": "302023", "nombre": "Creatinina en sangre", "cantidad": 1},
+        {"codigo": "301045", "nombre": "Hemograma (incluye recuentos de leucocitos, eritrocitos, plaquetas, hemoglobina, hematocrito, fórmula leucocitaria, características de los elementos figurados y velocidad de eritrosedimentación)", "cantidad": 1},
+        {"codigo": "306042", "nombre": "V.D.R.L.", "cantidad": 1},
+        {"codigo": "307011", "nombre": "Venosa en adulto", "cantidad": 1},
+        {"codigo": "301041", "nombre": "Hemoglobina glicada A1c", "cantidad": 1},
+        {"codigo": "302034", "nombre": "Perfil lipídico (incluye mediciones de colesterol total, HDL-colesterol y triglicéridos con estimaciones por fórmula de LDL-colesterol, VLDL-colesterol y colesterol no-HDL)", "cantidad": 1},
+        {"codigo": "302032", "nombre": "Electrolitos plasmáticos (sodio, potasio, cloro) c/u", "cantidad": 3},
+        {"codigo": "303024", "nombre": "Tiroestimulante (TSH), hormona (Adulto, niño o R.N.)", "cantidad": 1},
+        {"codigo": "303027", "nombre": "Tiroxina o tetrayodotironina (T4)", "cantidad": 1},
+        {"codigo": "303028", "nombre": "Triyodotironina (T3)", "cantidad": 1},
+        {"codigo": "303016", "nombre": "Hormona luteinizante (LH)", "cantidad": 1},
+        {"codigo": "303030", "nombre": "Estradiol (17-Beta)", "cantidad": 1},
+        {"codigo": "302076", "nombre": "Perfil Hepático (incluye tiempo de protrombina, bilirrubina total y conjugada, fosfatasas alcalinas totales, GGT, transaminasas GOT/AST y GPT/ALT)", "cantidad": 1},
+        {"codigo": "302075", "nombre": "Perfil Bioquímico (determinación automatizada de 12 parámetros)", "cantidad": 1},
+        {"codigo": "302678", "nombre": "vitamina D", "cantidad": 1},
+        {"codigo": "302677", "nombre": "Vitamina B12", "cantidad": 1},
+        {"codigo": "309022", "nombre": "Orina Completa", "cantidad": 1}
+      ]
+    },
+    {
+      "nombre": "Chequeo preventivo hombre menos de 45 años",
+      "total": 18,
+      "examenes": [
+        {"codigo": "302023", "nombre": "Creatinina en sangre", "cantidad": 1},
+        {"codigo": "301045", "nombre": "Hemograma (incluye recuentos de leucocitos, eritrocitos, plaquetas, hemoglobina, hematocrito, fórmula leucocitaria, características de los elementos figurados y velocidad de eritrosedimentación)", "cantidad": 1},
+        {"codigo": "306042", "nombre": "V.D.R.L.", "cantidad": 1},
+        {"codigo": "307011", "nombre": "Venosa en adulto", "cantidad": 1},
+        {"codigo": "301041", "nombre": "Hemoglobina glicada A1c", "cantidad": 1},
+        {"codigo": "302034", "nombre": "Perfil lipídico (incluye mediciones de colesterol total, HDL-colesterol y triglicéridos con estimaciones por fórmula de LDL-colesterol, VLDL-colesterol y colesterol no-HDL)", "cantidad": 1},
+        {"codigo": "302032", "nombre": "Electrolitos plasmáticos (sodio, potasio, cloro) c/u", "cantidad": 3},
+        {"codigo": "303024", "nombre": "Tiroestimulante (TSH), hormona (Adulto, niño o R.N.)", "cantidad": 1},
+        {"codigo": "303027", "nombre": "Tiroxina o tetrayodotironina (T4)", "cantidad": 1},
+        {"codigo": "303028", "nombre": "Triyodotironina (T3)", "cantidad": 1},
+        {"codigo": "302076", "nombre": "Perfil Hepático (incluye tiempo de protrombina, bilirrubina total y conjugada, fosfatasas alcalinas totales, GGT, transaminasas GOT/AST y GPT/ALT)", "cantidad": 1},
+        {"codigo": "306169", "nombre": "Anticuerpos virales, determ. de H.I.V.", "cantidad": 1},
+        {"codigo": "302075", "nombre": "Perfil Bioquímico (determinación automatizada de 12 parámetros)", "cantidad": 1},
+        {"codigo": "302678", "nombre": "vitamina D", "cantidad": 1},
+        {"codigo": "302677", "nombre": "Vitamina B12", "cantidad": 1},
+        {"codigo": "309022", "nombre": "Orina Completa", "cantidad": 1}
+      ]
+    },
+    {
+      "nombre": "Chequeo preventivo hombre mas de 45 años",
+      "total": 22,
+      "examenes": [
+        {"codigo": "302023", "nombre": "Creatinina en sangre", "cantidad": 1},
+        {"codigo": "301045", "nombre": "Hemograma (incluye recuentos de leucocitos, eritrocitos, plaquetas, hemoglobina, hematocrito, fórmula leucocitaria, características de los elementos figurados y velocidad de eritrosedimentación)", "cantidad": 1},
+        {"codigo": "306042", "nombre": "V.D.R.L.", "cantidad": 1},
+        {"codigo": "307011", "nombre": "Venosa en adulto", "cantidad": 1},
+        {"codigo": "301041", "nombre": "Hemoglobina glicada A1c", "cantidad": 1},
+        {"codigo": "302034", "nombre": "Perfil lipídico (incluye mediciones de colesterol total, HDL-colesterol y triglicéridos con estimaciones por fórmula de LDL-colesterol, VLDL-colesterol y colesterol no-HDL)", "cantidad": 1},
+        {"codigo": "302032", "nombre": "Electrolitos plasmáticos (sodio, potasio, cloro) c/u", "cantidad": 3},
+        {"codigo": "303024", "nombre": "Tiroestimulante (TSH), hormona (Adulto, niño o R.N.)", "cantidad": 1},
+        {"codigo": "303027", "nombre": "Tiroxina o tetrayodotironina (T4)", "cantidad": 1},
+        {"codigo": "303028", "nombre": "Triyodotironina (T3)", "cantidad": 1},
+        {"codigo": "302076", "nombre": "Perfil Hepático (incluye tiempo de protrombina, bilirrubina total y conjugada, fosfatasas alcalinas totales, GGT, transaminasas GOT/AST y GPT/ALT)", "cantidad": 1},
+        {"codigo": "306169", "nombre": "Anticuerpos virales, determ. de H.I.V.", "cantidad": 1},
+        {"codigo": "302075", "nombre": "Perfil Bioquímico (determinación automatizada de 12 parámetros)", "cantidad": 1},
+        {"codigo": "302678", "nombre": "vitamina D", "cantidad": 1},
+        {"codigo": "302677", "nombre": "Vitamina B12", "cantidad": 1},
+        {"codigo": "309022", "nombre": "Orina Completa", "cantidad": 1},
+        {"codigo": "305070", "nombre": "Antigeno prostático específico (libre y total)", "cantidad": 2},
+        {"codigo": "303023", "nombre": "Testosterona libre en sangre", "cantidad": 1},
+        {"codigo": "303022", "nombre": "Testosterona en sangre", "cantidad": 1}
+      ]
+    },
+    {
+      "nombre": "Detección de anemia",
+      "total": 2,
+      "examenes": [
+        {"codigo": "301029", "nombre": "Fierro, capacidad de fijación del (incluye fierro sérico)", "cantidad": 1},
+        {"codigo": "301045", "nombre": "Hemograma (incluye recuentos de leucocitos, eritrocitos, plaquetas, hemoglobina, hematocrito, fórmula leucocitaria, características de los elementos figurados y velocidad de eritrosedimentación)", "cantidad": 1}
+      ]
+    }
+  ]
+}

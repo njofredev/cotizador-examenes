@@ -8,7 +8,8 @@ from datetime import date
 import psycopg2
 import uuid
 import logging
-from utils import PACKS, obtener_ahora_chile
+import json
+from utils import obtener_ahora_chile
 from pdf_generator import generar_cotizacion_pdf
 
 logging.basicConfig(level=logging.INFO)
@@ -287,6 +288,15 @@ if 'pdf_generado' not in st.session_state: st.session_state.pdf_generado = False
 if 'ms_key' not in st.session_state: st.session_state.ms_key = 0
 if 'pack_activo' not in st.session_state: st.session_state.pack_activo = None
 
+# Cargar packs desde JSON
+if 'packs_json' not in st.session_state:
+    try:
+        with open("pack.json", "r", encoding="utf-8") as f:
+            st.session_state.packs_json = json.load(f)["packs_examenes"]
+    except Exception as e:
+        st.error(f"Error cargando pack.json: {e}")
+        st.session_state.packs_json = []
+
 # Inicialización de datos de paciente para auto-rellenado
 if 'p_nombre' not in st.session_state: st.session_state.p_nombre = ""
 if 'p_fecha_nac' not in st.session_state: st.session_state.p_fecha_nac = date(1990, 1, 1)
@@ -354,18 +364,34 @@ elif st.session_state.paso == 'formulario':
                 st.markdown("#### 📦 Paquetes de exámenes")
                 st.caption("👈 Selecciona uno de nuestros paquetes preventivos haciendo clic en los botones azules, o arma el tuyo buscando exámenes manualmente en el buscador inferior.")
                 p_cols = st.columns(4)
-                for i, (p_name, p_data) in enumerate(PACKS.items()):
+                for i, pack in enumerate(st.session_state.packs_json):
+                    p_name = pack["nombre"]
                     with p_cols[i % 4]:
                         if st.button(p_name, key=f"pk_{i}", width="stretch", type="primary"):
                             st.session_state.seleccionados = []
                             st.session_state.cantidades = {}
                             st.session_state.pack_activo = p_name
-                            for kw, qty in p_data["items"].items():
-                                match = df_filtrado[df_filtrado["Nombre"].str.contains(kw, case=False, na=False)]
+                            
+                            for p_item in pack["examenes"]:
+                                cod = str(p_item["codigo"]) if p_item["codigo"] else None
+                                nom = p_item["nombre"]
+                                qty = p_item["cantidad"]
+                                
+                                match = pd.DataFrame()
+                                if cod and cod != "HOMA":
+                                    match = df_filtrado[df_filtrado["Código"] == cod]
+                                
+                                if match.empty:
+                                    # Respaldo por nombre exacto o aproximado si no hay código
+                                    match = df_filtrado[df_filtrado["Nombre"].str.contains(nom, case=False, na=False)]
+                                
                                 if not match.empty:
                                     it = match.iloc[0]["busqueda"]
                                     if it not in st.session_state.seleccionados: st.session_state.seleccionados.append(it)
                                     st.session_state.cantidades[it] = qty
+                                else:
+                                    logger.warning(f"No se encontró el examen del pack: {nom} ({cod})")
+                                    
                             st.session_state.ms_key += 1; st.rerun()
 
                 # Solo mostramos buscador individual si NO hay un pack activo

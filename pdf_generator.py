@@ -59,6 +59,12 @@ def generar_cotizacion_pdf(folio, timestamp_emision, nombre_p, doc_id, fecha_nac
         pdf.cell(w[3], 8, f"${(v1*r['Cant']):,.0f}", 1, 0, 'R')
         pdf.cell(w[4], 8, f"${(v2*r['Cant']):,.0f}", 1, 1, 'R')
     
+    pdf.set_font("Arial", 'I', 8)
+    pdf.set_fill_color(255, 255, 255)
+    total_items = int(df_sel['Cant'].sum())
+    pdf.cell(w[0]+w[1]+w[2], 6, f"TOTAL DE EXÁMENES COTIZADOS: {total_items}", 0, 0, 'R')
+    pdf.ln(6)
+    
     pdf.set_font("Arial", 'B', 9)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(w[0]+w[1]+w[2], 10, "TOTAL ESTIMADO A PAGAR", 1, 0, 'R', True)
