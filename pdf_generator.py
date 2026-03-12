@@ -46,7 +46,7 @@ def generar_cotizacion_pdf(folio, timestamp_emision, nombre_p, doc_id, fecha_nac
     pdf.ln()
     pdf.set_text_color(0)
     pdf.set_font("Arial", '', 8)
-    
+     
     for _, r in df_sel.iterrows():
         pdf.cell(w[0], 8, str(r['Código']), 1, 0, 'C')
         # Truncado de nombre para evitar desborde en Hoja 1
