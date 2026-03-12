@@ -222,6 +222,9 @@ pack_utf8.txt
 test*.py
 *.pdf
 cleanup_db.py
+main5FINAL.py
+test.py
+test2.py
 
 # Allow these files (Green dots in request)
 !aranceles.xlsx
