@@ -318,8 +318,8 @@ if 'pack_activo' not in st.session_state: st.session_state.pack_activo = None
 # Función para detectar si es móvil desde el servidor
 def es_mobile():
     try:
-        from streamlit.web.server.websocket_headers import _get_websocket_headers
-        headers = _get_websocket_headers()
+        # Usamos st.context.headers que es la forma moderna y recomendada
+        headers = st.context.headers
         if headers:
             ua = headers.get("User-Agent", "").lower()
             return any(m in ua for m in ["android", "iphone", "ipad", "mobile"])
