@@ -9,7 +9,7 @@ class PDF(FPDF):
         self.folio_om = folio_om
         self.timestamp_emision = timestamp_emision
         self.seccion_actual = "COTIZACIÓN"
-        self.paginas_por_seccion = {} # {seccion: [lista_de_paginas]}
+        self.paginas_por_seccion = {"COTIZACIÓN": [], "ORDEN MÉDICA": []}
         self.total_paginas_seccion = {"COTIZACIÓN": 0, "ORDEN MÉDICA": 0}
 
     def header(self):
@@ -23,11 +23,17 @@ class PDF(FPDF):
         self.set_font("Arial", 'I', 7)
         self.cell(0, 4, f"Fecha: {self.timestamp_emision}", ln=1, align='R')
         
-        # El número de página es relativo a la sección
-        # Usamos un marcador que reemplazaremos al final o simplemente lo manejamos manualmente
-        # Para simplicidad en este caso donde sabemos las secciones:
-        pagina_relativa = self.paginas_por_seccion.get(self.seccion_actual, []).index(self.page_no()) + 1
+        # Registrar página en la sección si no está (evita ValueError)
+        if self.page_no() not in self.paginas_por_seccion[self.seccion_actual]:
+            self.paginas_por_seccion[self.seccion_actual].append(self.page_no())
+        
+        pagina_relativa = self.paginas_por_seccion[self.seccion_actual].index(self.page_no()) + 1
         total_relativo = self.total_paginas_seccion[self.seccion_actual]
+        
+        # Si por alguna razón nos pasamos del estimado, ajustamos el total mostrado
+        if pagina_relativa > total_relativo: 
+            total_relativo = pagina_relativa
+            self.total_paginas_seccion[self.seccion_actual] = total_relativo
         
         self.cell(0, 4, f"Página {pagina_relativa} de {total_relativo}", ln=1, align='R')
         self.ln(5)
@@ -35,22 +41,21 @@ class PDF(FPDF):
 def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc_id, fecha_nac, prevision, df_sel, t_f, t_c, t_pg, t_pp, pack_nombre=None, incluir_om=False):
     pdf = PDF(folio_cot, folio_om, timestamp_emision)
     
-    # --- PRE-CÁLCULO DE PÁGINAS ---
-    # Esto es necesario para saber el "X de Y" antes de renderizar los headers
-    # Cotización
-    items_por_pagina = 18 # Aprox
+    # --- ESTIMACIÓN DE PÁGINAS MÁS CONSERVADORA ---
+    # La primera página tiene datos del paciente y cabecera, caben menos ítems (~14)
+    # Las siguientes páginas caben más (~22)
     total_items = len(df_sel)
-    paginas_cot = max(1, (total_items + items_por_pagina - 1) // items_por_pagina)
+    if total_items <= 14:
+        paginas_cot = 1
+    else:
+        paginas_cot = 1 + (total_items - 14 + 21) // 22 # Estimación
     
     pdf.total_paginas_seccion["COTIZACIÓN"] = paginas_cot
-    pdf.paginas_por_seccion["COTIZACIÓN"] = list(range(1, paginas_cot + 1))
     
     if incluir_om:
-        # La orden médica suele ser 1 página, pero si son muchos exámenes podría ser más.
-        # Por ahora asumimos 1 para la OM según el diseño actual, o calculamos similar.
-        paginas_om = max(1, (total_items + 20 - 1) // 20)
+        # La OM no tiene totales ni indicaciones largas, caben más ítems (~22 por página)
+        paginas_om = max(1, (total_items + 21) // 22)
         pdf.total_paginas_seccion["ORDEN MÉDICA"] = paginas_om
-        pdf.paginas_por_seccion["ORDEN MÉDICA"] = list(range(paginas_cot + 1, paginas_cot + paginas_om + 1))
 
     # --- RENDERIZADO HOJA 1: COTIZACIÓN ---
     pdf.seccion_actual = "COTIZACIÓN"
@@ -91,10 +96,10 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
     pdf.set_font("Arial", '', 8)
      
     for _, r in df_sel.iterrows():
-        # Verificamos si necesitamos salto de página manual para mantener el contador
-        if pdf.get_y() > 250:
+        # Verificamos si necesitamos salto de página manual
+        # El límite 250 es para dejar espacio a los totales e indicaciones al final
+        if pdf.get_y() > 255:
             pdf.add_page()
-            # Re-imprimir cabecera de tabla
             pdf.set_fill_color(2, 112, 249)
             pdf.set_text_color(255)
             pdf.set_font("Arial", 'B', 8)
@@ -116,6 +121,10 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
     
     total_items_sum = int(df_sel['Cant'].sum())
     
+    # Comprobamos espacio para los totales e indicaciones
+    if pdf.get_y() > 210: # Si queda poco espacio, pasamos a nueva página para el bloque final
+        pdf.add_page()
+
     pdf.set_font("Arial", 'B', 9)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(w[0]+w[1]+w[2], 10, "Total estimado a pagar", 1, 0, 'R', True)
@@ -127,20 +136,20 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
     pdf.set_font("Arial", 'I', 8)
     pdf.cell(w[0]+w[1]+w[2], 6, f"Total exámenes cotizados: {total_items_sum}", 0, 1, 'R')
     
-    pdf.ln(10)
+    pdf.ln(5)
     pdf.set_font("Arial", 'B', 8)
     pdf.cell(0, 5, "SUCURSAL LABORATORIO TOMA DE MUESTRAS:", ln=True)
     pdf.set_font("Arial", '', 8)
     pdf.cell(0, 4, "- Av. Vitacura #8620, Comuna de Vitacura.", ln=True)
     pdf.cell(0, 4, "- Sitio Web: www.policlinicotabancura.cl", ln=True)
     
-    pdf.ln(5)
+    pdf.ln(3)
     pdf.set_font("Arial", 'B', 8)
     pdf.cell(0, 5, "INDICACIONES IMPORTANTES:", ln=True)
     pdf.set_font("Arial", '', 7)
     pdf.multi_cell(0, 4, f"- Folio Cotización: {folio_cot}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. \n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.\n- Si el examen no es cubierto por Fonasa, aparecerá el valor a pagar en la columna copago.\n- Obtén claridad sobre tus resultados con la evaluación experta de nuestro equipo de medicina general.")
 
-    # --- HOJA 2: ORDEN MÉDICA (OPCIONAL) ---
+    # --- HOJA: ORDEN MÉDICA (OPCIONAL) ---
     if incluir_om:
         pdf.seccion_actual = "ORDEN MÉDICA"
         pdf.add_page()
@@ -156,9 +165,9 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
         pdf.cell(0, 6, f"Nombre: {nombre_p}", ln=1)
         pdf.cell(0, 6, f"Documento: {doc_id}", ln=1)
         pdf.cell(0, 6, f"Edad: {calcular_edad(fecha_nac)} años", ln=1)
-        pdf.ln(10)
+        pdf.ln(5)
 
-        # Tabla simplificada (sin precios)
+        # Tabla simplificada
         pdf.set_fill_color(2, 112, 249)
         pdf.set_text_color(255)
         pdf.set_font("Arial", 'B', 9)
@@ -173,7 +182,7 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
         pdf.set_font("Arial", '', 9)
         
         for _, r in df_sel.iterrows():
-            if pdf.get_y() > 250:
+            if pdf.get_y() > 260:
                 pdf.add_page()
                 pdf.set_fill_color(2, 112, 249)
                 pdf.set_text_color(255)
