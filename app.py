@@ -315,26 +315,19 @@ if 'pdf_generado' not in st.session_state: st.session_state.pdf_generado = False
 if 'ms_key' not in st.session_state: st.session_state.ms_key = 0
 if 'pack_activo' not in st.session_state: st.session_state.pack_activo = None
 
-# CSS para ocultar condicionalmente según el ancho (Usamos :has para ocultar el contenedor de Streamlit completo)
-st.markdown("""
-<style>
-    /* Ocultar versión mobile en pantallas grandes */
-    div[data-testid="stVerticalBlock"]:has(> div#mobile-wrapper) {
-        display: none !important;
-    }
+# Función para detectar si es móvil desde el servidor
+def es_mobile():
+    try:
+        from streamlit.web.server.websocket_headers import _get_websocket_headers
+        headers = _get_websocket_headers()
+        if headers:
+            ua = headers.get("User-Agent", "").lower()
+            return any(m in ua for m in ["android", "iphone", "ipad", "mobile"])
+    except:
+        pass
+    return False
 
-    @media (max-width: 768px) {
-        /* Ocultar versión escritorio en pantallas pequeñas */
-        div[data-testid="stVerticalBlock"]:has(> div#desktop-wrapper) {
-            display: none !important;
-        }
-        /* Mostrar versión mobile en pantallas pequeñas */
-        div[data-testid="stVerticalBlock"]:has(> div#mobile-wrapper) {
-            display: block !important;
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
+# Cargar packs desde JSON
 
 # Cargar packs desde JSON
 if 'packs_json' not in st.session_state:
@@ -412,22 +405,10 @@ elif st.session_state.paso == 'formulario':
                 st.markdown("#### 📦 Paquetes de exámenes")
                 st.caption("👈 Selecciona uno de nuestros paquetes preventivos para cargar los exámenes automáticamente.")
                 
-                # Renderizado Responsivo
-                # 1. Versión Desktop (Botones)
-                with st.container():
-                    st.markdown('<div id="desktop-wrapper"></div>', unsafe_allow_html=True)
-                    p_cols = st.columns(4)
-                    for i, pack in enumerate(st.session_state.packs_json):
-                        p_name = pack["nombre"]
-                        with p_cols[i % 4]:
-                            if st.button(p_name, key=f"pk_desk_{i}", width="stretch", type="primary"):
-                                aplicar_pack(pack, df_filtrado)
-
-                # 2. Versión Mobile (Dropdown)
-                with st.container():
-                    st.markdown('<div id="mobile-wrapper"></div>', unsafe_allow_html=True)
+                # Renderizado Responsivo (Lado del Servidor)
+                if es_mobile():
+                    # Versión Mobile (Dropdown)
                     pack_names = ["Seleccione un paquete..."] + [p["nombre"] for p in st.session_state.packs_json]
-                    # Si ya hay un pack activo, intentamos seleccionarlo en el dropdown
                     def_idx = 0
                     if st.session_state.pack_activo:
                         try:
@@ -437,10 +418,17 @@ elif st.session_state.paso == 'formulario':
                     
                     selected_p = st.selectbox("Elige un paquete preventivo:", pack_names, index=def_idx, key="mobile_pack_sel")
                     
-                    # Solo aplicamos si el pack seleccionado es distinto al activo actual
                     if selected_p != "Seleccione un paquete..." and selected_p != st.session_state.pack_activo:
                         pack_data = next(p for p in st.session_state.packs_json if p["nombre"] == selected_p)
                         aplicar_pack(pack_data, df_filtrado)
+                else:
+                    # Versión Desktop (Botones)
+                    p_cols = st.columns(4)
+                    for i, pack in enumerate(st.session_state.packs_json):
+                        p_name = pack["nombre"]
+                        with p_cols[i % 4]:
+                            if st.button(p_name, key=f"pk_desk_{i}", width="stretch", type="primary"):
+                                aplicar_pack(pack, df_filtrado)
 
                 # Solo mostramos buscador individual si NO hay un pack activo
                 if not st.session_state.pack_activo:
