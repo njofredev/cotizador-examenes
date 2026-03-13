@@ -67,7 +67,7 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
         if pack_nombre:
             pdf_obj.set_text_color(100, 100, 100)
             pdf_obj.set_font("Arial", 'I', 8)
-            pdf_obj.cell(0, 5, f"Pack: {pack_nombre}", ln=1, align='L')
+            pdf_obj.cell(0, 5, f"Pack seleccionado: {pack_nombre}", ln=1, align='L')
             pdf_obj.set_text_color(0)
         
         pdf_obj.ln(2)
@@ -127,13 +127,14 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
         pdf_obj.set_font("Arial", 'B', 8)
         pdf_obj.cell(0, 4, "SUCURSAL LABORATORIO TOMA DE MUESTRAS:", ln=True)
         pdf_obj.set_font("Arial", '', 8)
-        pdf_obj.cell(0, 4, "- Av. Vitacura #8620, Comuna de Vitacura | www.policlinicotabancura.cl", ln=True)
+        pdf_obj.cell(0, 4, "- Av. Vitacura #8620, Comuna de Vitacura.", ln=True)
+        pdf_obj.cell(0, 4, "- Sitio Web: www.policlinicotabancura.cl", ln=True)
         
         pdf_obj.ln(2)
         pdf_obj.set_font("Arial", 'B', 8)
         pdf_obj.cell(0, 4, "INDICACIONES IMPORTANTES:", ln=True)
-        pdf_obj.set_font("Arial", '', 7.5)
-        pdf_obj.multi_cell(0, 3.5, f"- Folio Cotización: {folio_cot} | Validez: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. Ayuno máximo 12 horas.\n- Pruebas PTGO (Curva Glucosa/Insulina): Sólo agenda previa 08:30am.\n- Valores sujetos a confirmación en sucursal. Notificar diabetes antes de atención.\n- Si el examen no es cubierto por Fonasa, aplica valor en columna copago.\n- Evaluación experta disponible con nuestro equipo de medicina general.")
+        pdf_obj.set_font("Arial", '', 7)
+        pdf_obj.multi_cell(0, 3.5, f"- Folio Cotización: {folio_cot}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. \n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.\n- Si el examen no es cubierto por Fonasa, aparecerá el valor a pagar en la columna copago.\n- Obtén claridad sobre tus resultados con la evaluación experta de nuestro equipo de medicina general.")
 
         # --- SECCIÓN: ORDEN MÉDICA ---
         if incluir_om:
