@@ -225,6 +225,7 @@ cleanup_db.py
 main5FINAL.py
 test.py
 test2.py
+/limpieza/
 
 # Allow these files (Green dots in request)
 !aranceles.xlsx
