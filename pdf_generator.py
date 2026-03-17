@@ -134,7 +134,7 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
         pdf_obj.set_font("Arial", 'B', 8)
         pdf_obj.cell(0, 4, "INDICACIONES IMPORTANTES:", ln=True)
         pdf_obj.set_font("Arial", '', 7)
-        pdf_obj.multi_cell(0, 3.5, f"- Folio Cotización: {folio_cot}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. \n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.\n- Si el examen no es cubierto por Fonasa, aparecerá el valor a pagar en la columna copago.\n- Obtén claridad sobre tus resultados con la evaluación experta de nuestro equipo de medicina general.")
+        pdf_obj.multi_cell(0, 3.5, f"- Aranceles Fonasa actualizados año 2026.\n- Folio Cotización: {folio_cot}\n- Validez de la cotización: 30 días.\n- (*) El valor a pagar no considera seguros complementarios. \n- El ayuno no debe superar las 12 horas.\n- Para pruebas PTGO (Curva de Glucosa/Insulina): Sólo con agenda previa a las 08:30am.\n- Valores sujetos a confirmación en sucursal al momento de la atención.\n- Si el paciente es diabético, debe notificar en recepción antes de su atención.\n- Si el examen no es cubierto por Fonasa, aparecerá el valor a pagar en la columna copago.\n- Obtén claridad sobre tus resultados con la evaluación experta de nuestro equipo de medicina general.")
 
         # --- SECCIÓN: ORDEN MÉDICA ---
         if incluir_om:
