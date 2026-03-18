@@ -319,6 +319,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+
+
 @st.cache_data
 def cargar_datos():
     try:
@@ -368,6 +370,9 @@ if os.path.exists("logo_vec.svg"):
         st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>Cotizador digital de exámenes</h2>", unsafe_allow_html=True)
+
+
+
 st.divider()
 
 if 'paso' not in st.session_state: st.session_state.paso = 'busqueda'
@@ -408,8 +413,8 @@ if 'p_prevision' not in st.session_state: st.session_state.p_prevision = "Selecc
 if st.session_state.paso == 'busqueda':
     with st.container():
         st.markdown("##### 🔍 Ingresa tu rut o documento extranjero")
-        tipo_doc_busq = st.radio("Documento", ["RUT Nacional", "Pasaporte / ID"], horizontal=True, help="Selecciona si tienes RUT chileno o Pasaporte extranjero.")
-        doc_id_input = st.text_input("Ingresa tu identificación:", help="Ingresa tu documento (ej: 12345678-9). Si ingresas un RUT existente se cargarán tus datos históricos.")
+        tipo_doc_busq = st.radio("Documento", ["RUT Nacional", "Pasaporte / ID"], horizontal=True, help="Selecciona si tienes RUT chileno o Pasaporte extranjero.", key="tipo_doc_radio")
+        doc_id_input = st.text_input("Ingresa tu identificación:", help="Ingresa tu documento (ej: 12345678-9). Si ingresas un RUT existente se cargarán tus datos históricos.", key="doc_id_input")
         if st.button("Ingresar", width="stretch"):
             if doc_id_input:
                 doc_validado = False
