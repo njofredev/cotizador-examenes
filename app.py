@@ -12,6 +12,9 @@ import json
 from utils import obtener_ahora_chile
 from pdf_generator import generar_cotizacion_pdf
 
+# Manejo de diálogos vía Query Params
+# Se verificará más adelante en el flujo principal
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -174,6 +177,28 @@ def validar_extranjero(doc):
         return doc
     return False
 # -------------------------------------------------------------
+# TERMINOS Y CONDICIONES DUMMY
+TERMINOS_TEXTO = """
+### Términos y Condiciones del Servicio - Policlínico Tabancura
+
+1. **Propósito del Cotizador**: Este servicio es una herramienta informativa. Los precios mostrados son referenciales y pueden variar según la vigencia de los aranceles de Fonasa o su Isapre al momento de la atención presencial.
+2. **Privacidad de Datos**: Los datos personales ingresados (Nombre, RUT, Fecha de Nacimiento) serán utilizados exclusivamente para generar la cotización y la orden médica correspondiente en nuestros sistemas. El Policlínico Tabancura garantiza la confidencialidad de su información.
+3. **Validez de la Cotización**: Esta cotización tiene una validez de **30 días corridos** desde la fecha de emisión. Transcurrido este plazo, los valores podrían ser actualizados.
+4. **Preparación para Exámenes**: Es responsabilidad del paciente informarse sobre los requisitos de ayuno o preparación previa para cada examen. Puede consultar estos detalles en nuestro sitio web o por vía telefónica.
+5. **Órdenes Médicas**: Las órdenes médicas generadas a través de paquetes preventivos son válidas únicamente para ser utilizadas en el Policlínico Tabancura.
+6. **Aceptación**: Al marcar la casilla "Acepto los términos y condiciones", usted declara que ha leído, comprendido y aceptado los puntos anteriores.
+7. **Email marketing**: Al aceptar los términos y condiciones, usted acepta recibir correos electrónicos con información sobre nuestros servicios y promociones.
+"""
+
+@st.dialog("Términos y Condiciones")
+def mostrar_terminos_dialog():
+    st.markdown(TERMINOS_TEXTO)
+    if st.button("Entendido"):
+        st.rerun()
+
+# --- TERMINOS DIALOG CHECK ---
+if st.query_params.get("ver_terminos") == "true":
+    mostrar_terminos_dialog()
 
 # 1. Configuración de página y CSS
 st.set_page_config(
@@ -219,41 +244,68 @@ st.markdown("""
         text-overflow: ellipsis;
     }
 
-    div[data-testid="stNumberInput"] {
-        width: 130px !important;
-    }
-    div[data-testid="stNumberInput"] button {
-        display: flex !important;
-    }
-    
-    span[data-baseweb="tag"] {
+    /* 1. Botones Primarios (Grandes y Azules) */
+    div.stButton > button[kind="primary"], 
+    div.stDownloadButton > button, 
+    div.stLinkButton > a {
         background-color: #0270f9 !important;
-    }
-    
-    .stButton>button, .stDownloadButton>button, .stLinkButton>a {
-        background-color: #0270f9;
         color: white !important;
         border-radius: 8px !important;
         font-weight: bold !important;
         border: none !important;
+        min-height: 45px !important;
+        width: 100% !important;
     }
     
-    .stButton>button:hover, .stDownloadButton>button:hover, .stLinkButton>a:hover {
-        background-color: #0156c2;
+    div.stButton > button[kind="primary"]:hover, 
+    div.stDownloadButton > button:hover {
+        background-color: #0156c2 !important;
     }
 
-    /* Botones de Paquetes de Exámenes (Uniformidad y Alineación) */
-    div.stButton button[kind="primary"] {
-        min-height: 85px !important;
-        padding: 5px 10px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
-        line-height: 1.2 !important;
-        font-size: 0.95rem !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
+    /* 2. Botones Secundarios (Transparentes - Actúan como Links) */
+    div.stButton > button[kind="secondary"] {
+        background: transparent !important;
+        background-color: transparent !important;
+        background-image: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #0270f9 !important;
+        text-decoration: underline !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: unset !important;
+        height: auto !important;
+        width: auto !important;
+        font-weight: 500 !important;
+        display: inline !important;
+        vertical-align: middle !important;
+    }
+    div.stButton > button[kind="secondary"]:hover {
+        color: #0156c2 !important;
+        text-decoration: none !important;
+    }
+    button[aria-label*="términos"]:hover {
+        color: #0156c2 !important;
+        text-decoration: none !important;
+    }
+
+    /* Quitar márgenes de columnas para evitar saltos */
+    [data-testid="column"] {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* 4. Paquetes de Exámenes */
+    .pack-btn-container div.stButton > button {
+        min-height: 80px !important;
+    }
+
+    /* 5. Fila de Términos (Ajuste de proximidad) */
+    .tight-tc-row [data-testid="column"] {
+        width: auto !important;
+        flex: unset !important;
+        padding-right: 10px !important;
     }
 
     /* Botón de eliminar en lista de exámenes */
@@ -279,10 +331,6 @@ st.markdown("""
         background-color: #28a745 !important;
     }
     
-    div.stButton button[aria-label*="nueva"] {
-        background-color: #6c757d !important;
-    }
-
     .sucursal-info {
         text-align: center;
         color: #718096;
@@ -381,6 +429,8 @@ if 'cantidades' not in st.session_state: st.session_state.cantidades = {}
 if 'pdf_generado' not in st.session_state: st.session_state.pdf_generado = False
 if 'ms_key' not in st.session_state: st.session_state.ms_key = 0
 if 'pack_activo' not in st.session_state: st.session_state.pack_activo = None
+if 'doc_id_sesion' not in st.session_state: st.session_state.doc_id_sesion = "n/a"
+if 'tipo_doc_sesion' not in st.session_state: st.session_state.tipo_doc_sesion = "Particular"
 
 # Función para detectar si es móvil desde el servidor
 def es_mobile():
@@ -415,9 +465,10 @@ if st.session_state.paso == 'busqueda':
         st.markdown("##### 🔍 Ingresa tu rut o documento extranjero")
         tipo_doc_busq = st.radio("Documento", ["RUT Nacional", "Pasaporte / ID"], horizontal=True, help="Selecciona si tienes RUT chileno o Pasaporte extranjero.", key="tipo_doc_radio")
         doc_id_input = st.text_input("Ingresa tu identificación:", help="Ingresa tu documento (ej: 12345678-9). Si ingresas un RUT existente se cargarán tus datos históricos.", key="doc_id_input")
-        if st.button("Ingresar", width="stretch"):
+        if st.button("Ingresar", width="stretch", type="primary"):
             if doc_id_input:
                 doc_validado = False
+                datos = None
                 if tipo_doc_busq == "RUT Nacional":
                     doc_validado = validar_rut(doc_id_input)
                     if not doc_validado:
@@ -501,12 +552,14 @@ elif st.session_state.paso == 'formulario':
                         aplicar_pack(pack_data, df_filtrado)
                 else:
                     # Versión Desktop (Botones)
+                    st.markdown('<div class="pack-btn-container">', unsafe_allow_html=True)
                     p_cols = st.columns(4)
                     for i, pack in enumerate(st.session_state.packs_json):
                         p_name = pack["nombre"]
                         with p_cols[i % 4]:
                             if st.button(p_name, key=f"pk_desk_{i}", width="stretch", type="primary"):
                                 aplicar_pack(pack, df_filtrado)
+                    st.markdown('</div>', unsafe_allow_html=True)
 
                 # Solo mostramos buscador individual si NO hay un pack activo
                 if not st.session_state.pack_activo:
@@ -573,21 +626,50 @@ elif st.session_state.paso == 'formulario':
                     }
                 )
                 
+                # Totales alineados
+                st.markdown("<br>", unsafe_allow_html=True)
                 m1, m2 = st.columns(2)
-                if prevision == "Fonasa":
-                    m1.metric("Total Bono", f"${t_f:,.0f}"); m2.metric("Total Copago", f"${t_c:,.0f}")
-                else:
-                    m1.metric("Total P. Gral", f"${t_pg:,.0f}"); m2.metric("Total P. Pref", f"${t_pp:,.0f}")
-
+                with m1:
+                    if prevision == "Fonasa":
+                        st.metric("Total Bono", f"${t_f:,.0f}")
+                    else:
+                        st.metric("Total P. Gral", f"${t_pg:,.0f}")
+                with m2:
+                    if prevision == "Fonasa":
+                        st.metric("Total Copago", f"${t_c:,.0f}")
+                    else:
+                        st.metric("Total P. Pref", f"${t_pp:,.0f}")
+ 
+                # --- SECCIÓN FINAL (CENTRADORA) ---
                 if not st.session_state.pdf_generado:
-                    if st.button("🚀 Generar PDF", width="stretch"):
+                    st.divider()
+                    
+                    # Columnas para centrar la aceptación (Tighter version)
+                    _, c_centro, _ = st.columns([1, 1.8, 1])
+                    with c_centro:
+                        st.markdown('<div class="tight-tc-row">', unsafe_allow_html=True)
+                        # Usamos una proporción aún más extrema para pegar la casilla al texto
+                        c_chk, c_lnk = st.columns([0.08, 0.92], vertical_alignment="center")
+                        with c_chk:
+                            acepto_terminos = st.checkbox("", key="acepto_terminos", label_visibility="collapsed")
+                        with c_lnk:
+                            if st.button("Acepto los términos y condiciones del servicio", key="btn_tc_final_link", type="secondary"):
+                                mostrar_terminos_dialog()
+                        st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    # Botón de PDF (Vuelve a ser ancho completo)
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if not acepto_terminos:
+                        st.info("ℹ️ Debes aceptar los términos y condiciones para generar tu cotización.")
+                    
+                    if st.button("🚀 Generar PDF", width="stretch", disabled=not acepto_terminos, key="btn_generar_pdf_final", type="primary"):
                         # Generamos dos folios diferentes
                         folio_cot = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
                         folio_om = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
                         
                         ahora_chile = obtener_ahora_chile()
                         timestamp_emision = ahora_chile.strftime("%d/%m/%Y %H:%M:%S")
-
+    
                         # Guardamos en DB usando el folio de la cotización como referencia principal
                         if guardar_en_db(folio_cot, nombre_p, st.session_state.tipo_doc_sesion, st.session_state.doc_id_sesion, fecha_nac, t_f, t_c, t_pg, t_pp, df_sel, prevision):
                             
@@ -616,13 +698,13 @@ elif st.session_state.paso == 'formulario':
 
             # Solo permitimos editar si NO es un pack (para no romper la integridad del paquete preventivo)
             if not st.session_state.pack_activo:
-                if st.button("✏️ Editar cotización", width="stretch"):
+                if st.button("✏️ Editar cotización", width="stretch", type="primary"):
                     st.session_state.pdf_generado = False
                     st.rerun()
             
             st.markdown("---")
             
-            if st.button("🔄 Generar nueva cotización", width="stretch"):
+            if st.button("🔄 Generar nueva cotización", width="stretch", type="primary"):
                 st.session_state.update({"seleccionados": [], "cantidades": {}, "pdf_generado": False, "ms_key": st.session_state.ms_key + 1, "pack_activo": None})
                 st.rerun()
 
@@ -633,8 +715,9 @@ elif st.session_state.paso == 'formulario':
 # FOOTER
 st.markdown("<br><br>", unsafe_allow_html=True)
 f_col1, f_col2, f_col3 = st.columns(3)
-with f_col1: st.markdown('<center><a href="#" class="footer-link">📄 Cotizador</a></center>', unsafe_allow_html=True)
-with f_col2: st.markdown('<center><a href="https://www.policlinicotabancura.cl" class="footer-link">🌐 Sitio Web</a></center>', unsafe_allow_html=True)
-with f_col3: st.markdown('<center><a href="https://www.instagram.com/politabancura/" class="footer-link">📸 Instagram</a></center>', unsafe_allow_html=True)
+with f_col1: st.markdown('<center><a href="https://www.policlinicotabancura.cl" class="footer-link">🌐 Sitio Web</a></center>', unsafe_allow_html=True)
+with f_col2: st.markdown('<center><a href="https://www.instagram.com/politabancura/" class="footer-link">📸 Instagram</a></center>', unsafe_allow_html=True)
+with f_col3: st.markdown('<center><a href="#" class="footer-link">📄 Cotizador</a></center>', unsafe_allow_html=True)
+
 st.divider()
-st.markdown("""<div class="sucursal-info">Sucursal Vitacura: Av. Vitacura #8620 <br><b>Área toma de muestras - Policlínico Tabancura</b><br>+562 2933 6740 - +569 6578 1253</div>""", unsafe_allow_html=True)
+st.markdown("""<div class="sucursal-info" style="text-align: center;">Sucursal Vitacura: Av. Vitacura #8620 <br><b>Área toma de muestras - Policlínico Tabancura</b><br>+562 2933 6740 - +569 6578 1253</div>""", unsafe_allow_html=True)
