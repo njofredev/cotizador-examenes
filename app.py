@@ -296,9 +296,13 @@ st.markdown("""
         justify-content: center;
     }
 
-    /* 4. Paquetes de Exámenes */
-    .pack-btn-container div.stButton > button {
-        min-height: 80px !important;
+    /* 4. Paquetes de Exámenes - Uniform button height */
+    .stButton button.main-packet-btn {
+        min-height: 110px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
     }
 
     /* 5. Fila de Términos (Ajuste de proximidad) */
@@ -552,14 +556,31 @@ elif st.session_state.paso == 'formulario':
                         aplicar_pack(pack_data, df_filtrado)
                 else:
                     # Versión Desktop (Botones)
-                    st.markdown('<div class="pack-btn-container">', unsafe_allow_html=True)
-                    p_cols = st.columns(4)
-                    for i, pack in enumerate(st.session_state.packs_json):
-                        p_name = pack["nombre"]
-                        with p_cols[i % 4]:
-                            if st.button(p_name, key=f"pk_desk_{i}", width="stretch", type="primary"):
-                                aplicar_pack(pack, df_filtrado)
-                    st.markdown('</div>', unsafe_allow_html=True)
+                    packs = st.session_state.packs_json
+                    
+                    # Inyectamos una clase específica via JS/HTML para estos botones
+                    st.markdown("""
+                        <script>
+                        setTimeout(function() {
+                            var buttons = window.parent.document.querySelectorAll('div.stButton button');
+                            buttons.forEach(function(btn) {
+                                var txt = btn.innerText;
+                                if (txt.includes('Chequeo') || txt.includes('Diabetes') || txt.includes('Anemia')) {
+                                    btn.classList.add('main-packet-btn');
+                                }
+                            });
+                        }, 500);
+                        </script>
+                    """, unsafe_allow_html=True)
+
+                    for i in range(0, len(packs), 4):
+                        cols = st.columns(4)
+                        row_packs = packs[i:i+4]
+                        for idx, pack in enumerate(row_packs):
+                            p_name = pack["nombre"]
+                            with cols[idx]:
+                                if st.button(p_name, key=f"pk_desk_{i + idx}", use_container_width=True, type="primary"):
+                                    aplicar_pack(pack, df_filtrado)
 
                 # Solo mostramos buscador individual si NO hay un pack activo
                 if not st.session_state.pack_activo:
