@@ -217,7 +217,7 @@ db_report.md
 diag_db.py
 firma_dr.png
 inspect_db.py
-main*.py
+# main*.py  <-- Comentado para permitir el despliegue del backend
 pack_utf8.txt
 test*.py
 *.pdf
@@ -226,6 +226,12 @@ main5FINAL.py
 test.py
 test2.py
 /limpieza/
+
+# Backend deployment files
+!backend/main.py
+!backend/Dockerfile
+!backend/.dockerignore
+!backend/requirements.txt
 
 # Allow these files (Green dots in request)
 !aranceles.xlsx
