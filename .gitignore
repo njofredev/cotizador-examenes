@@ -227,11 +227,11 @@ test.py
 test2.py
 /limpieza/
 
-# Backend deployment files
-!backend/main.py
-!backend/Dockerfile
-!backend/.dockerignore
-!backend/requirements.txt
+# Permitir todo el contenido de las carpetas para el despliegue
+!backend/
+!frontend/
+backend/.env  # Pero seguimos ignorando el .env por seguridad
+frontend/.env.local # Ignorar env locales del front
 
 # Allow these files (Green dots in request)
 !aranceles.xlsx
