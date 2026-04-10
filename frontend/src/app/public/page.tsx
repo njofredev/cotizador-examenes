@@ -14,22 +14,22 @@ import {
   Info,
   CheckCircle2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '../../lib/utils';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
 import { toast, Toaster } from 'sonner';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '../../components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
+} from '../../components/ui/tooltip';
+import { Separator } from '../../components/ui/separator';
 
-import { ExamSearch } from '@/components/cotizador/examen-search';
-import { PacketCard } from '@/components/cotizador/packet-card';
-import { CotizacionTable } from '@/components/cotizador/cotizacion-table';
+import { ExamSearch } from '../../components/cotizador/examen-search';
+import { PacketCard } from '../../components/cotizador/packet-card';
+import { CotizacionTable } from '../../components/cotizador/cotizacion-table';
 import {
   Dialog,
   DialogContent,
@@ -37,9 +37,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter
-} from '@/components/ui/dialog';
+} from '../../components/ui/dialog';
 
-import { getExamenes, getPaquetes, postCotizar, API_URL, Examen, Paquete } from '@/lib/api';
+import { getExamenes, getPaquetes, postCotizar, API_URL, Examen, Paquete } from '../../lib/api';
 
 export default function GuestPage() {
   const [mounted, setMounted] = React.useState(false);

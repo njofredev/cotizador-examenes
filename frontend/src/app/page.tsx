@@ -32,9 +32,9 @@ import {
 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,26 +42,26 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "../components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '../components/ui/select';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "../components/ui/tooltip";
+import { Separator } from '../components/ui/separator';
+import { Badge } from '../components/ui/badge';
+import { Checkbox } from '../components/ui/checkbox';
 
-import { ExamSearch } from '@/components/cotizador/examen-search';
-import { PacketCard } from '@/components/cotizador/packet-card';
-import { CotizacionTable } from '@/components/cotizador/cotizacion-table';
+import { ExamSearch } from '../components/cotizador/examen-search';
+import { PacketCard } from '../components/cotizador/packet-card';
+import { CotizacionTable } from '../components/cotizador/cotizacion-table';
 import {
   Dialog,
   DialogContent,
@@ -69,10 +69,10 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from '../components/ui/dialog';
 
-import { getExamenes, getPaquetes, getPaciente, postCotizar, API_URL, Examen, Paquete } from '@/lib/api';
-import { cn, formatRut } from '@/lib/utils';
+import { getExamenes, getPaquetes, getPaciente, postCotizar, API_URL, Examen, Paquete } from '../lib/api';
+import { cn, formatRut } from '../lib/utils';
 
 const PREVISION_OPTIONS = [
   { value: 'Fonasa', label: 'Fonasa' },

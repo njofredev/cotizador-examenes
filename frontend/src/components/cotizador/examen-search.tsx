@@ -3,16 +3,16 @@
 import * as React from 'react';
 import { Search, Package, PlusCircle, Zap } from 'lucide-react';
 import { Command as CommandPrimitive } from 'cmdk';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '../../lib/utils';
+import { Badge } from '../ui/badge';
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
-import { Examen } from '@/lib/api';
+} from '../ui/command';
+import { Examen } from '../../lib/api';
 
 interface ExamSearchProps {
   examenes: Examen[];

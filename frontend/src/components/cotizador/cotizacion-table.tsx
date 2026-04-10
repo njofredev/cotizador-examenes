@@ -8,16 +8,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from '../ui/table';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { Trash2, Plus, Minus, Info, HelpCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Examen } from '@/lib/api';
+} from "../ui/tooltip";
+import { Examen } from '../../lib/api';
 
 interface SelectedExamen {
   examen: Examen;
