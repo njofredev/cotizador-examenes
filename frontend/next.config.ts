@@ -14,6 +14,23 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   generateBuildId: async () => 'production-build',
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self' *",
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'ALLOWALL',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
