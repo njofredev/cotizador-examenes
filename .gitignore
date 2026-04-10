@@ -230,6 +230,7 @@ test2.py
 # Permitir todo el contenido de las carpetas para el despliegue
 !backend/
 !frontend/
+!frontend/src/lib/
 backend/.env  # Pero seguimos ignorando el .env por seguridad
 frontend/.env.local # Ignorar env locales del front
 
