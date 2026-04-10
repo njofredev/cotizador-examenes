@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  poweredByHeader: false,
+  generateBuildId: async () => 'production-build',
 };
 
 export default nextConfig;
