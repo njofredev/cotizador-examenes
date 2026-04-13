@@ -167,6 +167,7 @@ export default function CotizadorPage() {
   const [pdfUrl, setPdfUrl] = React.useState<string | null>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
+  const [errorCarga, setErrorCarga] = React.useState<string | null>(null);
   const [mounted, setMounted] = React.useState(false);
 
   // Package Confirmation State
@@ -187,34 +188,37 @@ export default function CotizadorPage() {
 
   // Initialization
   React.useEffect(() => {
-    async function init() {
-      try {
-        const [examRes, packRes] = await Promise.all([
-          getExamenes().catch(err => { console.error("Error examenes:", err); throw err; }),
-          getPaquetes().catch(err => { console.error("Error paquetes:", err); throw err; })
-        ]);
-        const allExams = examRes.data;
-
-        // Clean packets: Only keep exams that exist in the master list
-        const cleanPaquetes = packRes.data.map(p => ({
-          ...p,
-          examenes: p.examenes.filter(pe => allExams.some(e => e.codigo === pe.codigo))
-        }));
-
-        setExamenes(allExams);
-        setPaquetes(cleanPaquetes);
-      } catch (error: any) {
-        console.error('Error al cargar datos:', error);
-        const msg = error.response?.data?.detail || error.message || 'Error de conexión';
-        toast.error(`Error al cargar datos del servidor: ${msg}`);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     setMounted(true);
     init();
   }, []);
+
+  async function init() {
+    setLoading(true);
+    setErrorCarga(null);
+    try {
+      const [examRes, packRes] = await Promise.all([
+        getExamenes().catch(err => { console.error("Error examenes:", err); throw err; }),
+        getPaquetes().catch(err => { console.error("Error paquetes:", err); throw err; })
+      ]);
+      const allExams = examRes.data;
+
+      // Clean packets: Only keep exams that exist in the master list
+      const cleanPaquetes = packRes.data.map(p => ({
+        ...p,
+        examenes: p.examenes.filter(pe => allExams.some(e => e.codigo === pe.codigo))
+      }));
+
+      setExamenes(allExams);
+      setPaquetes(cleanPaquetes);
+    } catch (error: any) {
+      console.error('Error al cargar datos:', error);
+      const msg = error.response?.data?.detail || error.message || 'Error de conexión';
+      setErrorCarga(msg);
+      toast.error(`Error al cargar datos: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleIngresar = async () => {
     if (docId.length < 5) {
@@ -372,6 +376,38 @@ export default function CotizadorPage() {
   }, 0);
 
   // --- RENDERING MAIN PAGE (SINGLE INTERFACE) ---
+  const isReady = aceptoTerminos && selectedExams.length > 0 && !isGenerating && !!nombre && !!prevision;
+
+  if (!mounted) return null;
+
+  if (errorCarga && examenes.length === 0) {
+    return (
+      <div className="min-h-svh flex items-center justify-center bg-slate-50 p-6">
+        <Card className="max-w-md w-full border-none shadow-2xl p-8 text-center space-y-6">
+          <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto shadow-sm">
+            <AlertCircle className="h-10 w-10" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Fallo de Conexión</h2>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              No pudimos conectar con el servidor para cargar los exámenes. Esto puede ser un problema temporal de red.
+            </p>
+            <div className="bg-slate-100 p-2 rounded-lg mt-2 font-mono text-[10px] text-slate-400 break-all">
+              Error: {errorCarga}
+            </div>
+          </div>
+          <Button 
+            onClick={() => init()}
+            className="w-full h-14 bg-brand-dark text-brand-mint hover:bg-brand-dark/90 font-black uppercase tracking-tight rounded-2xl shadow-xl shadow-brand-dark/20 flex items-center justify-center gap-3 transition-all active:scale-95"
+          >
+            <RefreshCw className="h-5 w-5" />
+            Reintentar Conexión
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-svh flex flex-col bg-slate-50">
       <Toaster position="top-center" richColors />
@@ -831,24 +867,19 @@ export default function CotizadorPage() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-full">
-                          {(() => {
-                            const isReady = aceptoTerminos && selectedExams.length > 0 && !isGenerating && !!nombre && !!prevision;
-                            return (
-                              <Button
-                                className={cn(
-                                  "w-full h-14 text-base font-black shadow-xl transition-all duration-500 uppercase tracking-tight rounded-2xl",
-                                  isReady
-                                    ? "bg-brand-mint hover:bg-brand-mint/90 text-brand-dark shadow-brand-mint/20 hover:scale-[1.02] active:scale-95"
-                                    : "bg-slate-100 text-slate-300"
-                                )}
-                                disabled={!isReady}
-                                onClick={handleGenerarPDF}
-                              >
-                                {isGenerating ? <RefreshCw className="mr-2 h-5 w-5 animate-spin" /> : <FileDown className="mr-2 h-6 w-6" />}
-                                Generar Cotización
-                              </Button>
-                            );
-                          })()}
+                          <Button
+                            className={cn(
+                              "w-full h-14 text-base font-black shadow-xl transition-all duration-500 uppercase tracking-tight rounded-2xl",
+                              isReady
+                                ? "bg-brand-mint hover:bg-brand-mint/90 text-brand-dark shadow-brand-mint/20 hover:scale-[1.02] active:scale-95"
+                                : "bg-slate-100 text-slate-300"
+                            )}
+                            disabled={!isReady}
+                            onClick={handleGenerarPDF}
+                          >
+                            {isGenerating ? <RefreshCw className="mr-2 h-5 w-5 animate-spin" /> : <FileDown className="mr-2 h-6 w-6" />}
+                            Generar Cotización
+                          </Button>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent className="bg-brand-dark text-white border-none shadow-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest animate-in zoom-in-95">
