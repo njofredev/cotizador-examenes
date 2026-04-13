@@ -21,7 +21,11 @@ export function PacketCard({ paquete, active, onSelect }: PacketCardProps) {
   
   return (
     <Card 
-      className={`relative cursor-pointer transition-all duration-500 group border-slate-100 hover:border-brand-dark hover:shadow-2xl rounded-2xl ${active ? 'border-brand-mint ring-2 ring-brand-mint/20 shadow-lg bg-brand-dark' : 'bg-white'} h-full overflow-hidden active:scale-[0.98] flex flex-col`}
+      className={`relative cursor-pointer transition-all duration-500 group rounded-2xl h-full overflow-hidden active:scale-[0.98] flex flex-col
+        ${active 
+          ? 'bg-brand-dark border-brand-mint ring-2 ring-brand-mint/20 shadow-lg text-white' 
+          : 'bg-white border-slate-100 hover:bg-brand-dark hover:border-brand-dark hover:shadow-2xl'
+        }`}
       onClick={() => onSelect(paquete)}
     >
       <div className={`absolute top-3 right-3 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0'}`}>
@@ -63,11 +67,6 @@ export function PacketCard({ paquete, active, onSelect }: PacketCardProps) {
           )}
         </div>
       </CardContent>
-
-      {/* Decorative hover bg - only for non-active states to avoid flickering */}
-      {!active && (
-        <div className="absolute inset-0 bg-brand-dark -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      )}
     </Card>
   );
 }
