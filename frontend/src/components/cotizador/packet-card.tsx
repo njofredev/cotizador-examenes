@@ -42,29 +42,32 @@ export function PacketCard({ paquete, active, onSelect }: PacketCardProps) {
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="p-4 pt-0 flex-1 relative overflow-hidden flex flex-col justify-end min-h-[40px]">
-        {/* DEFAULT VIEW: Shown on mobile and as desktop base state */}
-        <div className={`transition-all duration-500 ${active ? 'opacity-0 -translate-y-4' : 'opacity-100 group-hover:opacity-0 group-hover:-translate-y-4'}`}>
-          <p className={`text-[11px] font-bold transition-colors ${active ? 'text-white/40' : 'text-slate-400 group-hover:text-white/40'}`}>
-            {paquete.examenes.length} exámenes especializados
-          </p>
-        </div>
-
-        {/* DESKTOP HOVER PEEK: Only for screen sizes >= sm and triggered on hover or active */}
-        <div className={`hidden sm:flex absolute inset-x-4 bottom-4 flex-col gap-2 transition-all duration-500 ${active ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 group-hover:opacity-100 group-hover:translate-y-0'}`}>
-          <ul className="space-y-1">
-            {paquete.examenes.slice(0, examLimit).map((ex, i) => (
-              <li key={i} className="flex items-center gap-1.5 text-[10px] font-bold text-white/90 leading-none">
-                <div className="h-1 w-1 rounded-full bg-brand-mint shrink-0" />
-                <span className="truncate">{ex.nombre}</span>
-              </li>
-            ))}
-          </ul>
-          {paquete.examenes.length > examLimit && (
-            <p className="text-[9px] font-black text-brand-mint uppercase tracking-widest pl-2.5">
-              + {paquete.examenes.length - examLimit} adicionales
+      <CardContent className="px-4 pb-4 pt-0 flex-1 relative flex flex-col justify-center min-h-[90px]">
+        {/* Container for both states to share the same space */}
+        <div className="relative w-full">
+          {/* DEFAULT VIEW: Shown on mobile and as desktop base state */}
+          <div className={`transition-all duration-500 ${active ? 'opacity-0 -translate-y-2' : 'opacity-100 group-hover:opacity-0 group-hover:-translate-y-2'}`}>
+            <p className={`text-[11px] font-bold transition-colors ${active ? 'text-white/40' : 'text-slate-400 group-hover:text-white/40'}`}>
+              {paquete.examenes.length} exámenes especializados
             </p>
-          )}
+          </div>
+
+          {/* DESKTOP HOVER PEEK: Only for screen sizes >= sm and triggered on hover or active */}
+          <div className={`hidden sm:flex absolute inset-0 flex-col gap-1.5 transition-all duration-500 ${active ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0'}`}>
+            <ul className="space-y-1">
+              {paquete.examenes.slice(0, examLimit).map((ex, i) => (
+                <li key={i} className="flex items-center gap-2 text-[10px] font-bold text-white/90 leading-tight">
+                  <div className="h-1 w-1 rounded-full bg-brand-mint shrink-0" />
+                  <span className="truncate">{ex.nombre}</span>
+                </li>
+              ))}
+            </ul>
+            {paquete.examenes.length > examLimit && (
+              <p className="text-[9px] font-black text-brand-mint uppercase tracking-widest pl-2.5">
+                + {paquete.examenes.length - examLimit} adicionales
+              </p>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
