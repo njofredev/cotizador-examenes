@@ -359,6 +359,7 @@ export default function CotizadorPage() {
     setSelectedExams([]);
     setPackActivo(null);
     setPdfUrl(null);
+    setCurrentStep(1);
     toast.info('Formulario reiniciado');
   };
 
@@ -372,7 +373,7 @@ export default function CotizadorPage() {
 
   // --- RENDERING MAIN PAGE (SINGLE INTERFACE) ---
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-svh flex flex-col bg-slate-50">
       <Toaster position="top-center" richColors />
 
       {/* MOBILE STICKY HEADER - Shown when identified and scrolled */}
@@ -433,7 +434,10 @@ export default function CotizadorPage() {
         </div>
       </div>
 
-      <main className="container max-w-6xl mx-auto px-4 pt-4 md:pt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 pb-[220px] md:pb-12">
+      <main className={cn(
+        "container max-w-6xl mx-auto px-4 pt-4 md:pt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 md:pb-12",
+        selectedExams.length > 0 && isPatientChecked ? "pb-[220px]" : "pb-12"
+      )}>
 
         {/* Left Column: Form & Selection */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
@@ -719,14 +723,16 @@ export default function CotizadorPage() {
                   items={selectedExams}
                   prevision={prevision}
                   onUpdateCantidad={(codigo, cant) => {
-                    const newExams = [...selectedExams];
-                    const idx = newExams.findIndex(i => i.examen.codigo === codigo);
-                    if (idx > -1) {
-                      newExams[idx].cantidad = cant;
-                      setSelectedExams(newExams);
-                    }
+                    setSelectedExams(prev => {
+                      const newExams = [...prev];
+                      const idx = newExams.findIndex(i => i.examen.codigo === codigo);
+                      if (idx > -1) {
+                        newExams[idx].cantidad = cant;
+                      }
+                      return newExams;
+                    });
                   }}
-                  onRemove={(codigo) => setSelectedExams(selectedExams.filter(i => i.examen.codigo !== codigo))}
+                  onRemove={(codigo) => setSelectedExams(prev => prev.filter(i => i.examen.codigo !== codigo))}
                   isPackActive={!!packActivo}
                 />
 
@@ -749,12 +755,20 @@ export default function CotizadorPage() {
                       <span className="text-2xl font-black text-brand-dark">${totalV2.toLocaleString('es-CL')}</span>
                     </div>
                     <Button
-                      onClick={handleGenerarPDF}
-                      disabled={!aceptoTerminos || !nombre || !prevision || isGenerating || selectedExams.length === 0}
-                      className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-tight shadow-lg shadow-emerald-100 border-b-4 border-emerald-700 transition-all active:scale-95"
+                      onClick={() => {
+                        if (pdfUrl) window.open(`${API_URL}${pdfUrl}`, '_blank');
+                        else handleGenerarPDF();
+                      }}
+                      disabled={!aceptoTerminos || !nombre || !prevision || isGenerating || (selectedExams.length === 0 && !pdfUrl)}
+                      className={cn(
+                        "w-full h-14 rounded-2xl font-black uppercase tracking-tight shadow-lg transition-all active:scale-95 border-b-4",
+                        pdfUrl 
+                          ? "bg-brand-mint hover:bg-brand-mint/90 text-brand-dark border-brand-mint/20" 
+                          : "bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-700 shadow-emerald-100"
+                      )}
                     >
-                      {isGenerating ? <RefreshCw className="h-5 w-5 animate-spin" /> : <FileDown className="h-5 w-5 mr-3" />}
-                      {isGenerating ? 'Generando...' : 'Descargar PDF'}
+                      {isGenerating ? <RefreshCw className="h-5 w-5 animate-spin mr-3" /> : <FileDown className="h-5 w-5 mr-3" />}
+                      {isGenerating ? 'Generando...' : pdfUrl ? 'Descargar PDF Oficial' : 'Generar y Descargar'}
                     </Button>
                   </div>
                 </div>
