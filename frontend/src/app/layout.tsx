@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Cotizador Digital | Policlínico Tabancura",
   description: "Plataforma de cotización de exámenes preventivos y aranceles Fonasa/Particular.",
+  icons: {
+    icon: "/logo_vec.svg",
+  },
 };
 
 export default function RootLayout({

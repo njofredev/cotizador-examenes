@@ -125,8 +125,8 @@ function IntroCard() {
               <Search className="h-4 w-4 text-slate-400 group-hover:text-brand-mint" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Tipo de Previsión</h1>
-              <p className="text-slate-500 text-sm">Selecciona una de las dos previsiones para acceder a la selección de exámenes.</p>
+              <p className="text-xs font-black text-brand-dark uppercase tracking-tighter">2. Tipo de Previsión</p>
+              <p className="text-[11px] text-slate-500 font-medium tracking-tight">Selecciona una de las dos previsiones para acceder a la selección de exámenes.</p>
             </div>
           </div>
 
@@ -482,7 +482,7 @@ export default function CotizadorPage() {
                         <div className="flex items-center gap-1.5 px-1 animate-in fade-in slide-in-from-top-1 duration-700">
                           <Activity className="h-3 w-3 text-brand-mint" />
                           <p className="text-[10px] text-slate-400 font-bold italic">
-                            Cargaremos tus datos automáticamente si ya eres paciente.
+                            Una vez ingresado tu número de identificación, presiona Enter para continuar.
                           </p>
                         </div>
                       )}
@@ -607,15 +607,15 @@ export default function CotizadorPage() {
                   /* Placeholder card when no identification/prevision is set or terms not accepted */
                   <Card className="border-dashed border-2 bg-slate-50/30 border-slate-200 rounded-2xl animate-in fade-in duration-500">
                     <CardContent className="py-10 md:py-12 flex flex-col items-center text-center space-y-4">
-                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                        <User className="h-8 w-8 text-slate-200" />
+                      <div className="bg-amber-50 p-4 rounded-2xl shadow-sm border border-amber-100 animate-pulse">
+                        <AlertCircle className="h-8 w-8 text-amber-500" />
                       </div>
                       <div className="max-w-sm px-4">
-                        <h3 className="font-black text-slate-400 text-sm md:text-base uppercase tracking-widest">
-                          Paso Pendiente
+                        <h3 className="font-black text-amber-600/60 text-sm md:text-base uppercase tracking-widest">
+                          Identificación Requerida
                         </h3>
-                        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Tipo de Previsión</h1>
-                        <p className="text-slate-500 text-sm">Selecciona una de las dos previsiones para acceder a la selección de exámenes.</p>
+                        <h1 className="text-2xl font-black text-slate-800 tracking-tight">Paso Pendiente</h1>
+                        <p className="text-slate-500 text-sm font-medium leading-relaxed">Para comenzar a buscar exámenes, primero ingresa tu <span className="text-brand-dark font-black">RUT o Pasaporte</span> en el panel de identificación.</p>
                       </div>
                     </CardContent>
                   </Card>
