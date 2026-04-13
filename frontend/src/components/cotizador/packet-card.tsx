@@ -45,22 +45,22 @@ export function PacketCard({ paquete, active, onSelect }: PacketCardProps) {
       </div>
 
       {/* HOVER/ACTIVE OVERLAY: Mini list of exams */}
-      <div className={`absolute inset-0 bg-brand-dark p-4 flex flex-col justify-center transition-all duration-500 ${active ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none'}`}>
-        <div className="space-y-3">
+      <div className={`absolute inset-0 bg-brand-dark p-6 flex flex-col justify-center transition-all duration-500 ${active ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none'}`}>
+        <div className="space-y-4">
           <div className="flex items-center gap-2 border-b border-white/10 pb-2">
             <Package className="h-3.5 w-3.5 text-brand-mint" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-brand-mint/80">Incluye este Pack</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-brand-mint/80">Incluye este Pack</span>
           </div>
-          <ul className="space-y-1.5">
-            {paquete.examenes.slice(0, iif(paquete.examenes.length > 6, 5, 6)).map((ex, i) => (
-              <li key={i} className="flex items-start gap-2 text-[10px] font-bold text-white leading-tight">
-                <CheckCircle2 className="h-3 w-3 text-brand-mint shrink-0 mt-0.5" />
+          <ul className="space-y-2">
+            {paquete.examenes.slice(0, 4).map((ex, i) => (
+              <li key={i} className="flex items-start gap-2 text-[11px] font-bold text-white leading-tight">
+                <CheckCircle2 className="h-3.5 w-3.5 text-brand-mint shrink-0 mt-0.5" />
                 <span className="line-clamp-2">{ex.nombre}</span>
               </li>
             ))}
-            {paquete.examenes.length > (iif(paquete.examenes.length > 6, 5, 6)) && (
-              <li className="text-[9px] font-black text-brand-mint/50 uppercase tracking-tighter pl-5 pt-1">
-                + {paquete.examenes.length - 5} adicionales
+            {paquete.examenes.length > 4 && (
+              <li className="text-[10px] font-black text-brand-mint/60 uppercase tracking-widest pl-5 pt-1">
+                + {paquete.examenes.length - 4} adicionales
               </li>
             )}
           </ul>
