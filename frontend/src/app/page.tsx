@@ -838,11 +838,13 @@ export default function CotizadorPage() {
                         </div>
                       </TooltipTrigger>
                       <TooltipContent className="bg-brand-dark text-white border-none shadow-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest animate-in zoom-in-95">
-                        {!aceptoTerminos && selectedExams.length === 0
-                          ? "Falta aceptar términos y seleccionar exámenes"
-                          : !aceptoTerminos
+                        {isReady 
+                          ? "Click para generar tu PDF oficial"
+                          : !aceptoTerminos 
                             ? "Debes aceptar los términos y condiciones"
-                            : "Selecciona al menos un examen"
+                            : selectedExams.length === 0
+                              ? "Selecciona al menos un examen"
+                              : "Ingresa Rut del paciente para continuar"
                         }
                       </TooltipContent>
                     </Tooltip>
