@@ -894,8 +894,8 @@ export default function CotizadorPage() {
 
       {/* STICKY MOBILE ACTION BAR - Visible only on mobile when items are selected */}
       {selectedExams.length > 0 && isPatientChecked && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden animate-in slide-in-from-bottom-full duration-500">
-          <div className="bg-brand-dark/95 backdrop-blur-md border-t border-white/10 p-4 pb-6 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] flex flex-col gap-3">
+        <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden animate-in slide-in-from-bottom-full duration-500 bg-brand-dark/95 backdrop-blur-md border-t border-white/10 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)]">
+          <div className="p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] flex flex-col gap-3">
 
             {/* Top row: Summary Info */}
             <div className="flex items-center justify-between px-1 border-b border-white/5 pb-2">
