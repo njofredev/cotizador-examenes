@@ -433,7 +433,7 @@ export default function CotizadorPage() {
         </div>
       </div>
 
-      <main className="container max-w-6xl mx-auto px-4 pt-4 md:pt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 pb-32 md:pb-12">
+      <main className="container max-w-6xl mx-auto px-4 pt-4 md:pt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 pb-[220px] md:pb-12">
 
         {/* Left Column: Form & Selection */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
