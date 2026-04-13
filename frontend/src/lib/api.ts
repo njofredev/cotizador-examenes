@@ -1,16 +1,23 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apicotizador.policlinicotabancura.cl';
+
+// Extend AxiosRequestConfig to include our custom retry properties
+interface CustomConfig extends AxiosRequestConfig {
+  retry?: number;
+  retryDelay?: number;
+  retryCount?: number;
+}
 
 // Create a configured axios instance
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 15000, // 15 seconds timeout
+  timeout: 15000,
 });
 
 // Simple retry interceptor
 api.interceptors.response.use(null, async (error) => {
-  const { config } = error;
+  const config = error.config as CustomConfig;
   if (!config || !config.retry) return Promise.reject(error);
   
   config.retryCount = config.retryCount || 0;
@@ -47,10 +54,11 @@ export interface Paquete {
 }
 
 // Helper for requests with retry
-const withRetry = { retry: 3, retryDelay: 1.5 };
+const withRetry: CustomConfig = { retry: 3, retryDelay: 1.5 };
 
 export const getExamenes = () => api.get<Examen[]>('/api/examenes', withRetry);
 export const getPaquetes = () => api.get<Paquete[]>('/api/paquetes', withRetry);
 export const getPaciente = (docId: string) => api.get(`/api/paciente/${docId}`, withRetry);
-export const postCotizar = (data: any) => api.post('/api/cotizar', data); // No retry for POST to avoid double submission
+export const postCotizar = (data: any) => api.post('/api/cotizar', data);
+ // No retry for POST to avoid double submission
 

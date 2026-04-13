@@ -197,10 +197,10 @@ export default function CotizadorPage() {
     setErrorCarga(null);
     try {
       const [examRes, packRes] = await Promise.all([
-        getExamenes().catch(err => { console.error("Error examenes:", err); throw err; }),
-        getPaquetes().catch(err => { console.error("Error paquetes:", err); throw err; })
+        getExamenes(),
+        getPaquetes()
       ]);
-      const allExams = examRes.data;
+      const allExams: Examen[] = examRes.data;
 
       // Clean packets: Only keep exams that exist in the master list
       const cleanPaquetes = packRes.data.map(p => ({
@@ -265,12 +265,30 @@ export default function CotizadorPage() {
     }
   };
 
+  const DEFAULT_QUANTITIES: Record<string, number> = {
+    '302032': 3, // Electrolitos plasmáticos
+    '309012': 3, // Electrolitos orina
+    '302063': 2, // Transaminasas
+    '305027': 3, // Inmunoglobulinas
+    '305105': 2, // Beta 2 glicoproteina
+    '305084': 2, // Anticardiolipinas
+    '305170': 3, // Antígeno Ca 125, 15-3, 19-9
+    '306013': 2, // Bordetella
+    '306037': 2, // Mycoplasma
+    '306041': 2, // Treponema
+    '302039': 3, // Fosfatasas isoenzimas
+    '305108': 6, // A-ENA
+    '305081': 3, // Antiendomisio
+    '301025': 7  // Factores coagulación
+  };
+
   const handleSelectExamen = (examen: Examen) => {
     if (selectedExams.find(i => i.examen.codigo === examen.codigo)) {
       toast.info('El examen ya está en la lista');
       return;
     }
-    setSelectedExams(prev => [...prev, { examen, cantidad: 1 }]);
+    const initialCantidad = DEFAULT_QUANTITIES[examen.codigo] || 1;
+    setSelectedExams(prev => [...prev, { examen, cantidad: initialCantidad }]);
     toast.success(`${examen.nombre} añadido`);
   };
 

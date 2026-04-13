@@ -90,6 +90,23 @@ export default function GuestPage() {
     init();
   }, []);
 
+  const DEFAULT_QUANTITIES: Record<string, number> = {
+    '302032': 3, // Electrolitos plasmáticos
+    '309012': 3, // Electrolitos orina
+    '302063': 2, // Transaminasas
+    '305027': 3, // Inmunoglobulinas
+    '305105': 2, // Beta 2 glicoproteina
+    '305084': 2, // Anticardiolipinas
+    '305170': 3, // Antígeno Ca 125, 15-3, 19-9
+    '306013': 2, // Bordetella
+    '306037': 2, // Mycoplasma
+    '306041': 2, // Treponema
+    '302039': 3, // Fosfatasas isoenzimas
+    '305108': 6, // A-ENA
+    '305081': 3, // Antiendomisio
+    '301025': 7  // Factores coagulación
+  };
+
   const handleSelectExamen = (examen: Examen) => {
     if (packActivo) {
       toast.warning('No puedes agregar exámenes individuales a un paquete cerrado');
@@ -99,7 +116,8 @@ export default function GuestPage() {
       toast.info('El examen ya está en la lista');
       return;
     }
-    setSelectedExams(prev => [...prev, { examen, cantidad: 1 }]);
+    const initialCantidad = DEFAULT_QUANTITIES[examen.codigo] || 1;
+    setSelectedExams(prev => [...prev, { examen, cantidad: initialCantidad }]);
     toast.success(`${examen.nombre} añadido`);
   };
 
@@ -132,6 +150,10 @@ export default function GuestPage() {
   const handleGenerarPDF = async () => {
     if (selectedExams.length === 0) {
       toast.error('Selecciona al menos un examen');
+      return;
+    }
+    if (!prevision) {
+      toast.error('Selecciona tu previsión (Particular o Fonasa)');
       return;
     }
 
@@ -445,11 +467,11 @@ export default function GuestPage() {
                       <div className="w-full">
                         <Button
                           onClick={handleGenerarPDF}
-                          disabled={selectedExams.length === 0 || isGenerating}
+                          disabled={selectedExams.length === 0 || !prevision || isGenerating}
                           className={cn(
                             "w-full h-14 rounded-2xl text-base font-bold transition-all duration-300 shadow-xl",
-                            selectedExams.length === 0
-                              ? "bg-[#FFD700] hover:bg-[#FFD700] text-amber-900/50 border-b-4 border-amber-600/30 opacity-60 shadow-amber-200/20"
+                            (selectedExams.length === 0 || !prevision)
+                              ? "bg-amber-100 text-amber-900/40 border-b-4 border-amber-200 opacity-60 cursor-not-allowed"
                               : "bg-emerald-500 hover:bg-emerald-600 text-white border-b-4 border-emerald-700 shadow-emerald-200/50 scale-[1.02]"
                           )}
                         >
@@ -463,9 +485,11 @@ export default function GuestPage() {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      {selectedExams.length === 0
-                        ? "Agrega exámenes para generar la cotización"
-                        : "Descargar cotización en formato PDF"}
+                      {!prevision
+                        ? "Primero selecciona tu previsión arriba"
+                        : selectedExams.length === 0
+                          ? "Agrega exámenes para generar la cotización"
+                          : "Descargar cotización en formato PDF"}
                     </TooltipContent>
                   </Tooltip>
 
@@ -577,7 +601,7 @@ export default function GuestPage() {
                               ? "bg-brand-mint hover:bg-brand-mint/90 text-brand-dark shadow-brand-mint/20"
                               : "bg-slate-700 text-white/30"
                           )}
-                          disabled={selectedExams.length === 0 || isGenerating}
+                          disabled={selectedExams.length === 0 || !prevision || isGenerating}
                           onClick={handleGenerarPDF}
                         >
                           {isGenerating ? <RefreshCw className="h-4 w-4 animate-spin" /> : "Generar"}
