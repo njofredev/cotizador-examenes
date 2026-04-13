@@ -940,10 +940,10 @@ export default function CotizadorPage() {
                   </div>
                   <div className={`p-4 rounded-2xl border flex flex-col gap-2 ${pdfUrl ? 'bg-white/10 border-white/10 text-white/80' : 'bg-slate-50/50 border-slate-100 text-slate-500'}`}>
                     <p className="text-[10px] leading-relaxed font-bold">
-                      Sucursal Vitacura: Av. Vitacura #8620 • +562 2933 6740
+                      Sucursal Vitacura: Av. Vitacura #8620 • +56 2 2933 6740
                     </p>
                     <p className="text-[9px] leading-relaxed opacity-60 font-medium">
-                      Toma de muestras - Policlínico Tabancura
+                      Dirigirse al 3er piso - Policlínico Tabancura
                     </p>
                     <div className="flex gap-2 pt-2">
                       <a href="https://www.policlinicotabancura.cl" target="_blank" className={`flex-1 text-[9px] font-black text-center py-2 rounded-xl uppercase border transition-all ${pdfUrl ? 'border-white/20 text-white hover:bg-white/10' : 'border-slate-200 text-brand-dark bg-white hover:bg-slate-50 hover:border-slate-300 shadow-sm'}`}>Sitio Web</a>
@@ -1166,7 +1166,7 @@ export default function CotizadorPage() {
               <Button
                 className="w-full bg-brand-dark text-brand-mint hover:bg-brand-dark/90 h-14 text-base font-black shadow-xl shadow-brand-dark/20 uppercase tracking-tight flex items-center justify-center gap-3 transition-all hover:scale-[1.02]"
                 onClick={() => {
-                  window.open('https://policlinicotabancura.cl/reserva-de-horas/', '_blank');
+                  window.open('https://ff.healthatom.io/FKV7ZY', '_blank');
                   setIsSuccessModalOpen(false);
                 }}
               >
@@ -1203,7 +1203,8 @@ export default function CotizadorPage() {
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-brand-dark uppercase tracking-tighter">Lugar de Atención</span>
-                <span className="text-[11px] text-slate-500 font-medium">Sucursal Vitacura, Av. Vitacura #8620</span>
+                <span className="text-[11px] text-slate-500 font-medium">Sucursal Vitacura, Av. Vitacura #8620 (+56 2 2933 6740)</span>
+                <span className="text-[10px] text-slate-400 font-bold">Dirigirse al 3er Piso</span>
               </div>
             </div>
           </div>

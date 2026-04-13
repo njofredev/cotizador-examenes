@@ -511,9 +511,8 @@ export default function GuestPage() {
 
                   <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
                     <div className="space-y-1">
-                      <p className="text-[11px] font-bold text-slate-700">Sucursal Vitacura: Av. Vitacura #8620</p>
-                      <p className="text-[10px] text-slate-500">+56 2 2933 6740</p>
-                      <p className="text-[9px] text-slate-400 italic">Toma de muestras - Policlínico Tabancura</p>
+                      <p className="text-[11px] font-bold text-slate-700">Sucursal Vitacura: Av. Vitacura #8620 • +56 2 2933 6740</p>
+                      <p className="text-[10px] text-slate-500 font-bold">Dirigirse al 3er piso - Policlínico Tabancura</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -663,6 +662,17 @@ export default function GuestPage() {
                   <Download className="h-5 w-5" />
                   DESCARGAR ARCHIVO PDF
                 </Button>
+              </div>
+              
+              <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-4 border border-slate-100">
+                <div className="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 shrink-0">
+                  <MapPin className="h-5 w-5 text-brand-mint" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-brand-dark uppercase tracking-widest">Lugar de Atención</span>
+                  <span className="text-[11px] text-slate-600 font-bold">Sucursal Vitacura, Av. Vitacura #8620</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Dirigirse al 3er Piso (+56 2 2933 6740)</span>
+                </div>
               </div>
 
               <Separator className="bg-slate-100" />
