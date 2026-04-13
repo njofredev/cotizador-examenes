@@ -28,7 +28,8 @@ import {
   CircleCheck,
   Heart,
   Trash2,
-  PlusCircle
+  PlusCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
@@ -124,8 +125,8 @@ function IntroCard() {
               <Search className="h-4 w-4 text-slate-400 group-hover:text-brand-mint" />
             </div>
             <div>
-              <p className="text-xs font-black text-brand-dark uppercase tracking-tighter">2. Selecciona</p>
-              <p className="text-[11px] text-slate-500 font-medium">Busca exámenes individuales o packs</p>
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Tipo de Previsión</h1>
+              <p className="text-slate-500 text-sm">Selecciona una de las dos previsiones para acceder a la selección de exámenes.</p>
             </div>
           </div>
 
@@ -172,9 +173,12 @@ export default function CotizadorPage() {
   const [pendingPackage, setPendingPackage] = React.useState<Paquete | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = React.useState(false);
+  const [currentStep, setCurrentStep] = React.useState(1); // 1: Info, 2: Search, 3: Results
+
 
   // Registration Flow State
   const [isPatientChecked, setIsPatientChecked] = React.useState(false);
+  const [isEditingPatient, setIsEditingPatient] = React.useState(false);
   const [isSearching, setIsSearching] = React.useState(false);
 
   // Refs
@@ -185,7 +189,10 @@ export default function CotizadorPage() {
   React.useEffect(() => {
     async function init() {
       try {
-        const [examRes, packRes] = await Promise.all([getExamenes(), getPaquetes()]);
+        const [examRes, packRes] = await Promise.all([
+          getExamenes().catch(err => { console.error("Error examenes:", err); throw err; }),
+          getPaquetes().catch(err => { console.error("Error paquetes:", err); throw err; })
+        ]);
         const allExams = examRes.data;
 
         // Clean packets: Only keep exams that exist in the master list
@@ -196,13 +203,15 @@ export default function CotizadorPage() {
 
         setExamenes(allExams);
         setPaquetes(cleanPaquetes);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error al cargar datos:', error);
-        toast.error('Error al cargar datos del servidor');
+        const msg = error.response?.data?.detail || error.message || 'Error de conexión';
+        toast.error(`Error al cargar datos del servidor: ${msg}`);
       } finally {
         setLoading(false);
       }
     }
+
     setMounted(true);
     init();
   }, []);
@@ -216,12 +225,15 @@ export default function CotizadorPage() {
     try {
       const res = await getPaciente(docId);
       if (res.data && res.data.nombre) {
-        setNombre(res.data.nombre);
-        if (res.data.fecha_nacimiento) setFechaNac(res.data.fecha_nacimiento.split('T')[0]);
-        setPrevision(res.data.prevision || 'Particular');
-        toast.success('Paciente encontrado');
+        // Only show toast if data is different or not yet checked
+        if (nombre !== res.data.nombre) {
+          setNombre(res.data.nombre);
+          if (res.data.fecha_nacimiento) setFechaNac(res.data.fecha_nacimiento.split('T')[0]);
+          setPrevision(res.data.prevision || 'Particular');
+          toast.success('Paciente encontrado');
+        }
       } else {
-        toast.info('Paciente nuevo, por favor completa sus datos');
+        if (!nombre) toast.info('Paciente nuevo, por favor completa sus datos');
       }
       setIsPatientChecked(true);
     } catch (error) {
@@ -231,15 +243,21 @@ export default function CotizadorPage() {
     }
   };
 
+
   const handlePrevisionChange = (value: string | null) => {
     const val = value || '';
     setPrevision(val);
-    if (val) {
+    if (val && aceptoTerminos && nombre) {
       toast.success('Paso completado: Registro de paciente listo');
+      setIsEditingPatient(false); // End editing mode when prevision is confirmed
+      setTimeout(() => setCurrentStep(2), 600);
       // Scroll to exam section after a short delay for the animation
       setTimeout(() => {
         examSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 400);
+    } else if (val && !isPatientChecked) {
+      // If choosing prevision in guest mode (or while filling info), advance to exams
+      setCurrentStep(2);
     }
   };
 
@@ -357,52 +375,114 @@ export default function CotizadorPage() {
     <div className="min-h-screen pb-12">
       <Toaster position="top-center" richColors />
 
-      <main className="container max-w-6xl mx-auto px-4 pt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* MOBILE STICKY HEADER - Shown when identified and scrolled */}
+      {isPatientChecked && nombre && (
+        <div className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-100 p-3 md:hidden animate-in slide-in-from-top-full duration-500 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-brand-mint/10 p-1.5 rounded-lg">
+              <User className="h-4 w-4 text-brand-mint" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-800 leading-none">{nombre}</p>
+              <p className="text-[8px] font-bold text-brand-mint uppercase tracking-tighter mt-0.5">{prevision}</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-[9px] font-black uppercase tracking-tighter"
+            onClick={() => {
+              setIsEditingPatient(true);
+              setCurrentStep(1);
+            }}
+          >
+            Editar
+          </Button>
+
+        </div>
+      )}
+
+      {/* MOBILE STEP INDICATOR */}
+      <div className="md:hidden pt-16 px-4">
+        <div className="flex items-center justify-between gap-2 max-w-sm mx-auto bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+          {[
+            { step: 1, label: 'Previsión', icon: ShieldCheck },
+            { step: 2, label: 'Selecciona', icon: Search },
+            { step: 3, label: 'Cotiza', icon: Activity }
+          ].map((s) => (
+            <button
+              key={s.step}
+              onClick={() => {
+                // Only allow going to step 2 if step 1 is done
+                if (s.step === 2 && (!nombre || !prevision || !aceptoTerminos)) return;
+                // Only allow going to step 3 if step 2 has items
+                if (s.step === 3 && selectedExams.length === 0) return;
+                setCurrentStep(s.step);
+              }}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-300",
+                currentStep === s.step
+                  ? "bg-brand-dark text-white shadow-lg shadow-brand-dark/20"
+                  : "text-slate-400 hover:bg-slate-100"
+              )}
+            >
+              <s.icon className={cn("h-3.5 w-3.5", currentStep === s.step ? "text-brand-mint" : "text-slate-300")} />
+              <span className="text-[9px] font-black uppercase tracking-tighter">{s.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <main className="container max-w-6xl mx-auto px-4 pt-4 md:pt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 pb-32 md:pb-12">
 
         {/* Left Column: Form & Selection */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
 
           {/* Patient Info Section */}
-          <section className="space-y-6">
-            {!(aceptoTerminos && nombre && prevision) ? (
+          <section className={cn(
+            "space-y-4 md:space-y-6",
+            currentStep !== 1 && "hidden md:block" // Hide on mobile if not in step 1
+          )}>
+
+            {(!(aceptoTerminos && nombre && prevision) || isEditingPatient) ? (
               <>
-                <div>
-                  <h2 className="text-2xl font-bold flex items-center gap-3 text-brand-dark">
+                <div className="px-1">
+                  <h2 className="text-xl md:text-2xl font-black flex items-center gap-3 text-brand-dark">
                     <div className="bg-brand-mint/10 p-2 rounded-xl">
-                      <User className="h-6 w-6 text-brand-mint" />
+                      <User className="h-5 w-5 md:h-6 md:w-6 text-brand-mint" />
                     </div>
-                    Datos del paciente
+                    Identificación del Paciente
                   </h2>
-                  <p className="text-slate-500 mt-1">Ingresa la identificación para cargar o registrar al paciente</p>
+                  <p className="text-xs md:text-sm text-slate-500 mt-1">Ingresa tu documento para cargar tu perfil</p>
                 </div>
 
-                <Card className="border-none shadow-sm overflow-hidden">
-                  <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border-none shadow-sm overflow-hidden rounded-2xl">
+                  <CardContent className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className={cn("space-y-2 transition-all duration-300", !isPatientChecked ? "lg:col-span-2" : "lg:col-span-1")}>
-                      <label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Identificación (Rut/Pasaporte)</label>
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1">RUT o Pasaporte</label>
                       <div className="flex gap-2">
                         <Input
                           value={docId}
                           onChange={(e) => setDocId(formatRut(e.target.value))}
-                          placeholder="Ingrese RUT o pasaporte..."
-                          className="bg-slate-50 border-slate-200 h-11"
+                          placeholder="Ej: 12.345.678-9"
+                          className="bg-slate-50 border-slate-200 h-11 md:h-12 rounded-xl"
                           onKeyDown={(e) => e.key === 'Enter' && handleIngresar()}
                           onBlur={handleIngresar}
                         />
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" onClick={handleIngresar} disabled={!mounted ? false : loading} className="h-11 w-11 shrink-0">
+                            <Button variant="outline" size="icon" onClick={handleIngresar} disabled={!mounted ? false : loading} className="h-11 w-11 md:h-12 md:w-12 rounded-xl shrink-0">
                               {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Buscar paciente o validar RUT</TooltipContent>
+                          <TooltipContent>Buscar o validar</TooltipContent>
                         </Tooltip>
                       </div>
                       {!isPatientChecked && (
                         <div className="flex items-center gap-1.5 px-1 animate-in fade-in slide-in-from-top-1 duration-700">
                           <Activity className="h-3 w-3 text-brand-mint" />
-                          <p className="text-[10px] text-slate-400 font-medium italic">
-                            Ingresa sólo números, sin puntos ni guión. <b>Presiona Enter</b> para continuar.
+                          <p className="text-[10px] text-slate-400 font-bold italic">
+                            Cargaremos tus datos automáticamente si ya eres paciente.
                           </p>
                         </div>
                       )}
@@ -411,64 +491,69 @@ export default function CotizadorPage() {
                     {isPatientChecked && (
                       <>
                         <div className="space-y-2 lg:col-span-1 animate-in fade-in slide-in-from-top-1 duration-300">
-                          <label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Nombre completo</label>
+                          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1">Nombre Completo</label>
                           <Input
                             value={nombre}
                             onChange={(e) => setNombre(e.target.value.toUpperCase())}
                             disabled={!!pdfUrl}
-                            placeholder="Ingrese el nombre del paciente..."
-                            className="bg-slate-50 border-slate-200 uppercase h-11"
+                            placeholder="NOMBRE APELLIDO"
+                            className="bg-slate-50 border-slate-200 uppercase h-11 md:h-12 rounded-xl font-bold"
                           />
                         </div>
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-300">
-                          <label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Fecha de nacimiento</label>
+                          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1">Fecha Nacimiento</label>
                           <Input
                             type="date"
                             value={fechaNac}
                             onChange={(e) => setFechaNac(e.target.value)}
                             disabled={!!pdfUrl}
-                            className="bg-slate-50 border-slate-200 block w-full h-11"
+                            className="bg-slate-50 border-slate-200 block w-full h-11 md:h-12 rounded-xl font-bold"
                           />
                         </div>
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-300">
-                          <label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Previsión</label>
+                          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1">Previsión</label>
                           <Select value={prevision} onValueChange={handlePrevisionChange} disabled={!!pdfUrl}>
-                            <SelectTrigger className="bg-slate-50 border-slate-200 h-11 w-full">
-                              <SelectValue placeholder="Seleccione previsión..." />
+                            <SelectTrigger className="bg-slate-50 border-slate-200 h-11 md:h-12 w-full rounded-xl font-bold">
+                              <SelectValue placeholder="Seleccione..." />
                             </SelectTrigger>
-                            <SelectContent>
-                              {PREVISION_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
+                              {PREVISION_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value} className="font-bold">{opt.label}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </div>
 
                         {/* Terms and Conditions Checkbox */}
-                        <div className="md:col-span-2 mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-4 transition-all hover:bg-slate-100/80 animate-in fade-in slide-in-from-top-1 duration-500">
+                        <div className="md:col-span-2 mt-2 p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex items-start gap-4 transition-all hover:bg-slate-100/50 animate-in fade-in slide-in-from-top-1 duration-500">
                           <Checkbox
                             id="terms"
-                            className="mt-1 border-slate-300"
+                            className="mt-1 border-slate-300 h-5 w-5 rounded-md"
                             checked={aceptoTerminos}
-                            onCheckedChange={(checked) => setAceptoTerminos(checked as boolean)}
+                            onCheckedChange={(checked) => {
+                              const val = checked as boolean;
+                              setAceptoTerminos(val);
+                              if (val && nombre && prevision) {
+                                setTimeout(() => setCurrentStep(2), 600);
+                              }
+                            }}
                           />
                           <div className="grid gap-1.5 leading-none">
                             <label
                               htmlFor="terms"
-                              className="text-xs font-medium text-slate-700 leading-relaxed cursor-pointer select-none"
+                              className="text-xs font-bold text-slate-600 leading-relaxed cursor-pointer select-none"
                             >
-                              He leído y acepto los{" "}
+                              Acepto los{" "}
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   setIsTerminosModalOpen(true);
                                 }}
-                                className="text-brand-mint font-bold hover:underline underline-offset-4"
+                                className="text-brand-mint font-black hover:underline underline-offset-4 decoration-2"
                               >
                                 Términos y condiciones
                               </button>
-                              <span className="text-[9px] text-slate-400 ml-1">(Hacer clic para leer)</span>
                             </label>
-                            <p className="text-[9px] text-slate-400 mt-0.5 font-medium">Declaración jurada obligatoria según ley de derechos del paciente.</p>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Declaración obligatoria según ley de derechos del paciente.</p>
                           </div>
                         </div>
                       </>
@@ -478,20 +563,21 @@ export default function CotizadorPage() {
               </>
             ) : (
               /* Collapsed view when terms are accepted */
-              <Card className="border-none bg-brand-dark text-white shadow-lg animate-in slide-in-from-top-4 duration-500">
+              <Card className="border-none bg-brand-dark text-white shadow-xl rounded-2xl animate-in slide-in-from-top-4 duration-500 overflow-hidden">
+                <div className="h-1 w-full bg-brand-mint" />
                 <CardContent className="p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-white/10 p-2 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white/10 p-2 rounded-xl">
                         <User className="h-5 w-5 text-brand-mint" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-sm leading-tight">{nombre}</h3>
+                        <h3 className="font-black text-sm tracking-tight">{nombre}</h3>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <Badge className="bg-brand-mint/20 hover:bg-brand-mint/30 text-brand-mint text-[9px] border-none px-1.5 py-0 h-4">
+                          <Badge className="bg-brand-mint/20 hover:bg-brand-mint/30 text-brand-mint text-[9px] border-none px-2 py-0 h-4 font-black">
                             {prevision}
                           </Badge>
-                          <span className="text-[10px] text-white/50">{docId}</span>
+                          <span className="text-[10px] text-white/40 font-mono">{docId}</span>
                         </div>
                       </div>
                     </div>
@@ -500,17 +586,10 @@ export default function CotizadorPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setAceptoTerminos(false)}
-                      className="text-white/60 hover:text-white hover:bg-white/10 text-xs font-bold gap-2"
+                      className="text-white/40 hover:text-white hover:bg-white/10 text-[10px] font-black gap-2 uppercase tracking-tighter"
                     >
-                      <ArrowLeft className="h-3 w-3" /> Cambiar datos
+                      <RefreshCw className="h-3 w-3" /> Cambiar
                     </Button>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 px-1 animate-in fade-in slide-in-from-top-1 duration-1000">
-                    <Activity className="h-3 w-3 text-brand-mint" />
-                    <p className="text-[10px] font-medium text-white/50 italic">
-                      Ya puedes seleccionar exámenes de manera individual o elegir un paquete preventivo de exámenes.
-                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -518,175 +597,216 @@ export default function CotizadorPage() {
           </section>
 
           {/* Search Examen Block / Placeholder (Conditional Rendering) */}
-          {!pdfUrl && (
-            <>
-              {(!prevision || !aceptoTerminos) ? (
-                /* Placeholder card when no identification/prevision is set or terms not accepted */
-                <Card className="border-dashed border-2 bg-amber-50/30 border-amber-100 animate-in fade-in duration-500">
-                  <CardContent className="py-12 flex flex-col items-center text-center space-y-4">
-                    <div className="bg-white p-4 rounded-full shadow-sm border border-amber-100">
-                      <User className="h-8 w-8 text-amber-300" />
-                    </div>
-                    <div className="max-w-sm">
-                      <h3 className="font-bold text-slate-800 text-lg mb-1">
-                        {!prevision ? "Identificación" : "Pasos pendientes"}
-                      </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed px-6">
-                        {!prevision
-                          ? "Para comenzar, ingresa tu RUT. Cargaremos tus datos automáticamente si ya eres paciente."
-                          : "Para continuar, debes completar tus datos, seleccionar tu previsión y leer y aceptar los términos y condiciones."
-                        }
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                /* Actual Exam Selection - Shown AFTER Prevision is selected */
-                <div ref={examSectionRef} className="space-y-10 animate-in fade-in zoom-in-95 duration-500">
-
-                  {/* Mode 1: Individual Search */}
-                  <section className={`space-y-6 transition-opacity ${packActivo ? 'opacity-50 pointer-events-none' : ''}`}>
-                    <div className="flex items-center gap-3">
-                      <div className="bg-brand-mint/10 p-2 rounded-lg">
-                        <Search className="h-5 w-5 text-brand-mint" />
+          <div className={cn(
+            "space-y-6",
+            currentStep !== 2 && "hidden md:block" // Hide on mobile if not in step 2
+          )}>
+            {!pdfUrl && (
+              <>
+                {(!prevision || !aceptoTerminos) ? (
+                  /* Placeholder card when no identification/prevision is set or terms not accepted */
+                  <Card className="border-dashed border-2 bg-slate-50/30 border-slate-200 rounded-2xl animate-in fade-in duration-500">
+                    <CardContent className="py-10 md:py-12 flex flex-col items-center text-center space-y-4">
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                        <User className="h-8 w-8 text-slate-200" />
                       </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-slate-800">
-                          Cotiza tus exámenes de manera individual
-                          {packActivo && <span className="ml-2 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-normal ">Limpia el <b>carrito</b> para cotizar de manera individual.</span>}
+                      <div className="max-w-sm px-4">
+                        <h3 className="font-black text-slate-400 text-sm md:text-base uppercase tracking-widest">
+                          Paso Pendiente
                         </h3>
-                        <p className="text-xs text-slate-500">Agrega exámenes por su nombre o código en el buscador</p>
+                        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Tipo de Previsión</h1>
+                        <p className="text-slate-500 text-sm">Selecciona una de las dos previsiones para acceder a la selección de exámenes.</p>
                       </div>
-                    </div>
-                    <ExamSearch
-                      examenes={examenes}
-                      onSelect={handleSelectExamen}
-                      onSearchChange={setIsSearching}
-                      disabled={!!packActivo}
-                      selectedIds={selectedExams.map(i => i.examen.codigo)}
-                    />
-                  </section>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  /* Actual Exam Selection - Shown AFTER Prevision is selected */
+                  <div ref={examSectionRef} className="space-y-6 md:space-y-10 animate-in fade-in zoom-in-95 duration-500">
 
-                  {/* Mode 2: Preventive Packages - Hide when individual exams are selected, or if a pack is active, OR if the user is currently searching */}
-                  {(selectedExams.length === 0 || !!packActivo) && !isSearching && (
-                    <section className="space-y-6 animate-in fade-in slide-in-from-top-3 duration-500">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-brand-mint/10 p-2 rounded-lg">
+                    {/* Mode 1: Individual Search */}
+                    <section className={`space-y-4 md:space-y-6 transition-opacity ${packActivo ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <div className="flex items-center gap-3 px-1">
+                        <div className="bg-brand-mint/10 p-2 rounded-xl">
+                          <Search className="h-5 w-5 text-brand-mint" />
+                        </div>
+                        <div>
+                          <h3 className="text-base md:text-xl font-black text-brand-dark tracking-tight">
+                            Selección Individual
+                          </h3>
+                          <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tighter">Buscador avanzado por nombre o código</p>
+                        </div>
+                      </div>
+                      <ExamSearch
+                        examenes={examenes}
+                        onSelect={handleSelectExamen}
+                        onSearchChange={setIsSearching}
+                        disabled={!!packActivo}
+                        selectedIds={selectedExams.map(i => i.examen.codigo)}
+                      />
+                    </section>
+
+                    {/* Mode 2: Preventive Packages - Hide when individual exams are selected, or if a pack is active, OR if the user is currently searching */}
+                    {(selectedExams.length === 0 || !!packActivo) && !isSearching && (
+                      <section className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-top-3 duration-500">
+                        <div className="flex items-center gap-3 px-1">
+                          <div className="bg-brand-mint/10 p-2 rounded-xl">
                             <Activity className="h-5 w-5 text-brand-mint" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold text-slate-800">Paquetes de Chequeo Preventivo</h3>
-                            <p className="text-xs text-slate-500">Optimiza tu salud con grupos de exámenes especializados</p>
+                            <h3 className="text-base md:text-xl font-black text-brand-dark tracking-tight">Packs Preventivos</h3>
+                            <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tighter">Optimiza tu salud con chequeos dirigidos</p>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {paquetes.map(p => (
-                          <PacketCard
-                            key={p.nombre}
-                            paquete={p}
-                            active={packActivo === p.nombre}
-                            onSelect={handleSelectPaquete}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                          {paquetes.map(p => (
+                            <PacketCard
+                              key={p.nombre}
+                              paquete={p}
+                              active={packActivo === p.nombre}
+                              onSelect={handleSelectPaquete}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           {/* Selection Table */}
-          {selectedExams.length > 0 && (
-            <div ref={resultsSectionRef} className="space-y-4 animate-in slide-in-from-bottom-5 duration-700 scroll-mt-[120px]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold flex items-center gap-3 text-brand-dark">
-                    <div className="bg-brand-mint/10 p-2 rounded-xl">
-                      <Activity className="h-6 w-6 text-brand-mint" />
-                    </div>
-                    Exámenes seleccionados
-                  </h2>
-                  <p className="text-slate-500 mt-1">
-                    {packActivo ? `Detalle del Pack: ${packActivo}` : 'Revisa el detalle de los servicios que has agregado'}
-                  </p>
+          <div className={cn(
+            "space-y-4",
+            currentStep !== 3 && "hidden md:block" // Hide on mobile if not in step 3
+          )}>
+            {selectedExams.length > 0 && (
+
+              <div ref={resultsSectionRef} className="space-y-4 animate-in slide-in-from-bottom-5 duration-700 scroll-mt-[120px]">
+                <div className="flex items-center justify-between px-1">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-black flex items-center gap-3 text-brand-dark tracking-tight">
+                      <div className="bg-brand-mint/10 p-2 rounded-xl">
+                        <Activity className="h-5 w-5 md:h-6 md:w-6 text-brand-mint" />
+                      </div>
+                      Lista de Selección
+                    </h2>
+                    <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                      {packActivo ? `Mostrando Pack: ${packActivo}` : 'Exámenes agregados a tu cotización'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedExams([]);
+                        setPackActivo(null);
+                        toast.info('Selección limpiada');
+                      }}
+                      className="text-slate-400 hover:text-red-500 hover:bg-red-50 h-8 gap-2 text-[10px] font-black uppercase tracking-tighter transition-all rounded-lg"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Limpiar</span>
+                    </Button>
+                    <Badge variant="secondary" className="bg-brand-dark text-brand-mint hover:bg-brand-dark font-black px-3 py-1 rounded-full border-none">
+                      {selectedExams.length} ítems
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedExams([]);
-                      setPackActivo(null);
-                      toast.info('Selección limpiada');
-                    }}
-                    className="text-slate-400 hover:text-red-500 hover:bg-red-50 h-8 gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Limpiar
-                  </Button>
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-500 hover:bg-slate-100 font-bold px-3 py-1">
-                    {selectedExams.length} ítems
-                  </Badge>
+                <CotizacionTable
+                  items={selectedExams}
+                  prevision={prevision}
+                  onUpdateCantidad={(codigo, cant) => {
+                    const newExams = [...selectedExams];
+                    const idx = newExams.findIndex(i => i.examen.codigo === codigo);
+                    if (idx > -1) {
+                      newExams[idx].cantidad = cant;
+                      setSelectedExams(newExams);
+                    }
+                  }}
+                  onRemove={(codigo) => setSelectedExams(selectedExams.filter(i => i.examen.codigo !== codigo))}
+                  isPackActive={!!packActivo}
+                />
+
+                {/* Mobile Extra Summary Card - Only visible on Step 3 Mobile */}
+                <div className="lg:hidden mt-8 pt-4 border-t border-slate-100">
+                  <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+                    <div className="text-center">
+                      <h3 className="text-xl font-bold text-slate-800 tracking-tight">Resumen Final</h3>
+                      <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">Cotización lista para descargar</p>
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-white">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isFonasa ? 'Bono Fonasa' : 'Arancel Gral. (Isapre/Part.)'}</span>
+                      <span className="text-base font-bold text-slate-600">${totalV1.toLocaleString('es-CL')}</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-brand-mint/5 p-4 rounded-2xl border border-brand-mint/10">
+                      <div>
+                        <span className="text-[9px] font-black text-brand-mint uppercase tracking-tighter">{isFonasa ? 'Tu Copago' : 'Arancel Mi Vita'}</span>
+                        <p className="text-[10px] text-slate-500 font-bold leading-none mt-1">{isFonasa ? 'Bono Fonasa' : 'Precio Preferencial (Tarjeta Mi Vita)'}</p>
+                      </div>
+                      <span className="text-2xl font-black text-brand-dark">${totalV2.toLocaleString('es-CL')}</span>
+                    </div>
+                    <Button
+                      onClick={handleGenerarPDF}
+                      disabled={!aceptoTerminos || !nombre || !prevision || isGenerating || selectedExams.length === 0}
+                      className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-tight shadow-lg shadow-emerald-100 border-b-4 border-emerald-700 transition-all active:scale-95"
+                    >
+                      {isGenerating ? <RefreshCw className="h-5 w-5 animate-spin" /> : <FileDown className="h-5 w-5 mr-3" />}
+                      {isGenerating ? 'Generando...' : 'Descargar PDF'}
+                    </Button>
+                  </div>
                 </div>
               </div>
-              <CotizacionTable
-                items={selectedExams}
-                prevision={prevision}
-                onUpdateCantidad={updateCantidad}
-                onRemove={removeExamen}
-                disabled={!!pdfUrl}
-                isPackActive={!!packActivo}
-              />
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Right Column: Totals & Summary */}
-        <div className="space-y-6 lg:sticky lg:top-[120px] transition-all duration-500 h-fit">
+
+        {/* Right Column: Totals & Summary - Hidden on mobile, but values used in sticky bar */}
+        <div className="space-y-6 lg:sticky lg:top-[120px] transition-all duration-500 h-fit hidden lg:block">
           {!isPatientChecked ? (
             <IntroCard />
           ) : (
-            <Card className={`border-none shadow-xl ${pdfUrl ? 'bg-primary text-white' : 'bg-white'} animate-in zoom-in-95 duration-500`}>
+            <Card className={`border-none shadow-xl ${pdfUrl ? 'bg-primary text-white' : 'bg-white'} animate-in zoom-in-95 duration-500 rounded-3xl overflow-hidden`}>
+              <div className={cn("h-1.5 w-full", pdfUrl ? "bg-white/20" : "bg-gradient-to-r from-brand-mint to-brand-dark")} />
               <CardHeader>
-                <CardTitle className="text-xl flex items-center justify-between">
-                  Total cotización
-                  {pdfUrl && <CheckCircle2 className="h-6 w-6 text-white animate-pulse" />}
+                <CardTitle className="text-xl font-black flex items-center justify-between tracking-tight">
+                  Resumen Cotización
+                  {pdfUrl && <CheckCircle2 className="h-6 w-6 text-brand-mint animate-pulse" />}
                 </CardTitle>
-                <CardDescription className={pdfUrl ? 'text-blue-100' : ''}>Desglose según tu previsión</CardDescription>
+                <CardDescription className={cn("font-bold text-[10px] uppercase tracking-widest", pdfUrl ? 'text-blue-100' : 'text-slate-400')}>Cifras actualizadas</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 py-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                    {isFonasa ? 'Valor Bono Fonasa' : 'Total Particular General'}
+              <CardContent className="space-y-6 py-4">
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                    {isFonasa ? 'Valor Bono Fonasa' : 'Arancel Gral. (Isapre/Part.)'}
                   </span>
-                  <span className={cn("text-lg font-bold", pdfUrl ? "text-white" : "text-slate-700")}>
+                  <span className={cn("text-lg font-black font-mono", pdfUrl ? "text-white" : "text-slate-600")}>
                     ${totalV1.toLocaleString('es-CL')}
                   </span>
                 </div>
-                <Separator className={pdfUrl ? 'bg-white/20' : ''} />
-                <div className="flex justify-between items-end">
+                <Separator className={pdfUrl ? 'bg-white/10' : 'bg-slate-50'} />
+                <div className="flex justify-between items-end bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block mb-1">
-                      {isFonasa ? 'Total copago' : 'Particular pref.'}
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1">
+                      {isFonasa ? 'Tu Copago Final' : 'Total a Pagar'}
                     </span>
-                    <span className={cn("text-[10px] font-medium", pdfUrl ? "text-blue-100" : "text-slate-500")}>
-                      A pagar en sucursal
+                    <span className={cn("text-[9px] font-black uppercase tracking-tighter", pdfUrl ? "text-blue-100" : "text-brand-mint")}>
+                      {isFonasa ? 'A pagar en Vitacura' : 'Arancel Mi Vita (Preferencial)'}
                     </span>
                   </div>
-                  <span className={cn("text-2xl font-black", pdfUrl ? "text-white" : "text-brand-dark")}>
+                  <span className={cn("text-3xl font-black font-mono tracking-tighter", pdfUrl ? "text-white" : "text-brand-dark")}>
                     ${totalV2.toLocaleString('es-CL')}
                   </span>
                 </div>
 
                 {isFonasa && totalV2 > totalV1 && !pdfUrl && (
-                  <div className="flex gap-2 p-3 bg-amber-50 rounded-lg border border-amber-100 animate-in fade-in slide-in-from-top-1 duration-500">
-                    <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-amber-800 font-bold leading-relaxed">
-                      Nota: El copago es superior al valor bono debido a que algunos exámenes seleccionados sólo se realizan de forma particular y no cuentan con cobertura Fonasa.
+                  <div className="flex gap-2 p-3 bg-brand-dark/5 rounded-xl border border-brand-dark/5 animate-in fade-in slide-in-from-top-1 duration-500">
+                    <AlertCircle className="h-3.5 w-3.5 text-brand-dark shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-brand-dark font-bold leading-relaxed tracking-tight">
+                      Nota: Copago superior al bono por exámenes sin cobertura Fonasa.
                     </p>
                   </div>
                 )}
@@ -702,22 +822,22 @@ export default function CotizadorPage() {
                             return (
                               <Button
                                 className={cn(
-                                  "w-full h-12 text-base font-black shadow-lg transition-all duration-500 uppercase tracking-tight",
+                                  "w-full h-14 text-base font-black shadow-xl transition-all duration-500 uppercase tracking-tight rounded-2xl",
                                   isReady
-                                    ? "bg-brand-mint hover:bg-brand-mint/90 text-brand-dark shadow-brand-mint/20"
-                                    : "bg-amber-400 hover:bg-amber-500 text-white shadow-amber-200/50"
+                                    ? "bg-brand-mint hover:bg-brand-mint/90 text-brand-dark shadow-brand-mint/20 hover:scale-[1.02] active:scale-95"
+                                    : "bg-slate-100 text-slate-300"
                                 )}
                                 disabled={!isReady}
                                 onClick={handleGenerarPDF}
                               >
-                                {isGenerating ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-5 w-5" />}
-                                Generar Cotización (PDF)
+                                {isGenerating ? <RefreshCw className="mr-2 h-5 w-5 animate-spin" /> : <FileDown className="mr-2 h-6 w-6" />}
+                                Generar Cotización
                               </Button>
                             );
                           })()}
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent className="bg-brand-dark text-white border-none shadow-xl py-2 px-4 text-xs font-bold animate-in zoom-in-95">
+                      <TooltipContent className="bg-brand-dark text-white border-none shadow-xl py-2 px-4 text-[10px] font-black uppercase tracking-widest animate-in zoom-in-95">
                         {!aceptoTerminos && selectedExams.length === 0
                           ? "Falta aceptar términos y seleccionar exámenes"
                           : !aceptoTerminos
@@ -728,41 +848,41 @@ export default function CotizadorPage() {
                     </Tooltip>
                     <Button
                       variant="ghost"
-                      className="w-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 text-[10px] uppercase font-bold tracking-widest mt-1"
+                      className="w-full text-slate-400 hover:text-brand-dark hover:bg-slate-50 text-[10px] uppercase font-black tracking-widest mt-1"
                       onClick={reset}
                     >
-                      <RefreshCw className="mr-2 h-3 w-3" /> Limpiar Formulario
+                      <RefreshCw className="mr-2 h-3.5 w-3.5" /> Limpiar Todo
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Button variant="secondary" className="w-full h-12 text-base font-black text-primary bg-white hover:bg-slate-100 shadow-xl" onClick={() => window.open(`${API_URL}${pdfUrl}`, '_blank')}>
-                      <FileDown className="mr-2 h-5 w-5" /> Descargar PDF
+                    <Button variant="secondary" className="w-full h-14 text-base font-black text-brand-dark bg-brand-mint hover:bg-brand-mint/90 shadow-brand-mint/20 rounded-2xl" onClick={() => window.open(`${API_URL}${pdfUrl}`, '_blank')}>
+                      <FileDown className="mr-2 h-6 w-6" /> Descargar PDF
                     </Button>
-                    <Button variant="ghost" className="w-full text-white/80 hover:text-white hover:bg-white/10 font-bold" onClick={reset}>
+                    <Button variant="ghost" className="w-full text-white/50 hover:text-white hover:bg-white/10 font-bold text-xs uppercase tracking-widest" onClick={reset}>
                       <RefreshCw className="mr-2 h-4 w-4" /> Nueva Cotización
                     </Button>
                   </>
                 )}
 
-                <Separator className={pdfUrl ? 'bg-white/20' : 'bg-slate-100'} />
+                <Separator className={pdfUrl ? 'bg-white/10' : 'bg-slate-50'} />
 
                 {/* Branch info integrated inside the main card */}
                 <div className="w-full space-y-3 py-2 text-left">
-                  <div className="flex items-center gap-2">
-                    <MapPin className={`h-4 w-4 ${pdfUrl ? 'text-brand-mint' : 'text-primary'}`} />
-                    <h4 className={`text-[11px] font-bold uppercase tracking-wider ${pdfUrl ? 'text-white' : 'text-slate-800'}`}>Lugar de atención</h4>
+                  <div className="flex items-center gap-2 px-1">
+                    <MapPin className={`h-4 w-4 ${pdfUrl ? 'text-brand-mint' : 'text-slate-400'}`} />
+                    <h4 className={`text-[10px] font-black uppercase tracking-widest ${pdfUrl ? 'text-white' : 'text-slate-500'}`}>Lugar de atención</h4>
                   </div>
-                  <div className={`p-3 rounded-lg border flex flex-col gap-2 ${pdfUrl ? 'bg-white/10 border-white/20 text-blue-50' : 'bg-slate-50 border-slate-100 text-slate-500'}`}>
+                  <div className={`p-4 rounded-2xl border flex flex-col gap-2 ${pdfUrl ? 'bg-white/10 border-white/10 text-white/80' : 'bg-slate-50/50 border-slate-100 text-slate-500'}`}>
                     <p className="text-[10px] leading-relaxed font-bold">
                       Sucursal Vitacura: Av. Vitacura #8620 • +562 2933 6740
                     </p>
-                    <p className="text-[9px] leading-relaxed opacity-80">
+                    <p className="text-[9px] leading-relaxed opacity-60 font-medium">
                       Toma de muestras - Policlínico Tabancura
                     </p>
-                    <div className="flex gap-2 pt-1">
-                      <a href="https://www.policlinicotabancura.cl" target="_blank" className={`flex-1 text-[9px] font-black text-center py-1.5 rounded uppercase border transition-all ${pdfUrl ? 'border-white/30 text-white hover:bg-white/10' : 'border-slate-200 text-primary hover:bg-white'}`}>Sitio Web</a>
-                      <a href="https://ff.healthatom.io/FKV7ZY" target="_blank" className={`flex-1 text-[9px] font-black text-center py-1.5 rounded uppercase border transition-all ${pdfUrl ? 'border-white/30 text-white hover:bg-white/10' : 'border-slate-200 text-primary hover:bg-white'}`}>Agendar Hora</a>
+                    <div className="flex gap-2 pt-2">
+                      <a href="https://www.policlinicotabancura.cl" target="_blank" className={`flex-1 text-[9px] font-black text-center py-2 rounded-xl uppercase border transition-all ${pdfUrl ? 'border-white/20 text-white hover:bg-white/10' : 'border-slate-200 text-brand-dark bg-white hover:bg-slate-50 hover:border-slate-300 shadow-sm'}`}>Sitio Web</a>
+                      <a href="https://ff.healthatom.io/FKV7ZY" target="_blank" className={`flex-1 text-[9px] font-black text-center py-2 rounded-xl uppercase border transition-all ${pdfUrl ? 'border-white/20 text-brand-mint bg-white hover:bg-white/90' : 'border-brand-mint/20 text-brand-mint bg-brand-mint/5 hover:bg-brand-mint/10 shadow-sm'}`}>Agendar Hora</a>
                     </div>
                   </div>
                 </div>
@@ -771,6 +891,104 @@ export default function CotizadorPage() {
           )}
         </div>
       </main>
+
+      {/* STICKY MOBILE ACTION BAR - Visible only on mobile when items are selected */}
+      {selectedExams.length > 0 && isPatientChecked && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden animate-in slide-in-from-bottom-full duration-500">
+          <div className="bg-brand-dark/95 backdrop-blur-md border-t border-white/10 p-4 pb-6 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] flex flex-col gap-3">
+
+            {/* Top row: Summary Info */}
+            <div className="flex items-center justify-between px-1 border-b border-white/5 pb-2">
+              <div className="flex items-center gap-2">
+                <div className="bg-brand-mint/20 text-brand-mint text-[9px] font-black uppercase px-2 py-0.5 rounded border border-brand-mint/30 tracking-tighter leading-none">
+                  {prevision}
+                </div>
+                <div className="text-[10px] font-bold text-white/50 tracking-tight leading-none uppercase">
+                  {selectedExams.length} {selectedExams.length === 1 ? 'Examen' : 'Exámenes'}
+                </div>
+              </div>
+              <div className="text-right flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                  <span className="text-[8px] font-black uppercase text-white/20 tracking-widest leading-none mb-0.5">
+                    {isFonasa ? 'Bono Fonasa' : 'Arancel Gral.'}
+                  </span>
+                  <span className="text-xs font-bold text-white/40 leading-none tabular-nums">
+                    ${totalV1.toLocaleString('es-CL')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-brand-mint uppercase tracking-widest leading-none mb-1">
+                  {isFonasa ? 'Total Copago' : 'Mi Vita (Pref.)'}
+                </span>
+                <span className="text-2xl font-black text-white font-mono leading-none tracking-tighter">
+                  ${totalV2.toLocaleString('es-CL')}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 flex-1 max-w-[210px]">
+                <Button
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedExams([]);
+                    setPackActivo(null);
+                    setCurrentStep(2);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    toast.info('Selección limpiada');
+                  }}
+                  className="h-12 w-12 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-xl transition-all active:scale-90 flex-shrink-0 border border-white/10"
+                  title="Limpiar Selección"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+
+                <div className="flex-1">
+                  {pdfUrl ? (
+                    <Button
+                      className="w-full h-12 bg-brand-mint hover:bg-brand-mint/90 text-brand-dark rounded-xl font-black uppercase text-xs shadow-lg shadow-brand-mint/20"
+                      onClick={() => window.open(`${API_URL}${pdfUrl}`, '_blank')}
+                    >
+                      <FileDown className="mr-2 h-4 w-4" />
+                      PDF
+                    </Button>
+                  ) : (
+                    currentStep === 3 ? (
+                      <Button
+                        className={cn(
+                          "w-full h-12 rounded-xl font-black uppercase text-xs shadow-lg transition-all active:scale-95",
+                          aceptoTerminos && nombre && prevision
+                            ? "bg-brand-mint hover:bg-brand-mint/90 text-brand-dark shadow-brand-mint/20"
+                            : "bg-slate-700 text-white/30"
+                        )}
+                        disabled={!aceptoTerminos || !nombre || !prevision || isGenerating}
+                        onClick={handleGenerarPDF}
+                      >
+                        {isGenerating ? <RefreshCw className="h-4 w-4 animate-spin" /> : "Generar"}
+                      </Button>
+                    ) : (
+                      <Button
+                        className="w-full h-12 bg-brand-mint text-brand-dark rounded-xl font-black uppercase text-xs shadow-lg shadow-brand-mint/20"
+                        onClick={() => {
+                          if (currentStep === 1 && nombre && prevision && aceptoTerminos) setCurrentStep(2);
+                          else if (currentStep === 2 && selectedExams.length > 0) setCurrentStep(3);
+                          else if (currentStep === 1) toast.info("Por favor completa tus datos");
+                          else if (currentStep === 2) toast.info("Selecciona al menos un examen");
+                        }}
+                      >
+                        Siguiente
+                      </Button>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Package Detail/Confirmation Dialog */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
@@ -802,15 +1020,15 @@ export default function CotizadorPage() {
             </ul>
           </div>
 
-          <DialogFooter className="mt-6 flex gap-2">
-            <Button variant="ghost" className="flex-1 font-bold h-11" onClick={() => {
+          <DialogFooter className="mt-6 flex flex-col gap-2 sm:flex-col sm:space-x-0 w-full">
+            <Button className="w-full bg-brand-dark text-brand-mint hover:bg-brand-dark/90 font-black h-12 sm:h-14 text-sm sm:text-base shadow-lg shadow-brand-dark/20 rounded-xl transition-all active:scale-95" onClick={confirmPackage}>
+              Confirmar y Agregar
+            </Button>
+            <Button variant="ghost" className="w-full font-black h-10 sm:h-12 text-sm sm:text-base text-brand-dark hover:bg-slate-100 rounded-xl transition-all active:scale-95" onClick={() => {
               setIsConfirmOpen(false);
               setPendingPackage(null);
             }}>
               Volver
-            </Button>
-            <Button className="flex-1 bg-brand-dark text-brand-mint hover:bg-brand-dark/90 font-bold h-11 shadow-lg shadow-brand-dark/20" onClick={confirmPackage}>
-              Confirmar y Agregar
             </Button>
           </DialogFooter>
         </DialogContent>

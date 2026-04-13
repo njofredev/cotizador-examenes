@@ -140,22 +140,22 @@ export function ExamSearch({
                         setSearch('');
                       }}
                       className={cn(
-                        "group flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all m-1",
+                        "group flex items-center gap-3 px-3 py-3 md:py-2 rounded-xl cursor-pointer transition-all m-1",
                         isSelected ? "bg-brand-mint/10" : "hover:bg-white hover:shadow-md border border-transparent hover:border-slate-100"
                       )}
                     >
                       <div className={cn(
-                        "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                        "h-10 w-10 md:h-8 md:w-8 rounded-xl md:rounded-lg flex items-center justify-center shrink-0 transition-colors",
                         isSelected ? "bg-brand-mint text-white" : "bg-slate-100 group-hover:bg-brand-mint/10 text-slate-400 group-hover:text-brand-mint"
                       )}>
-                        <PlusCircle className="h-4 w-4" />
+                        <PlusCircle className="h-5 w-5 md:h-4 md:w-4" />
                       </div>
 
                       <div className="flex items-center justify-between flex-1 gap-4 overflow-hidden">
                         <div className="flex flex-col gap-0.5 overflow-hidden">
                           <span
                             className={cn(
-                              "text-xs font-bold truncate transition-colors",
+                              "text-sm md:text-xs font-bold truncate transition-colors",
                               isSelected ? "text-brand-dark" : "text-slate-700"
                             )}
                             title={examen.nombre}
@@ -163,7 +163,7 @@ export function ExamSearch({
                             {examen.nombre}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] text-slate-400 font-mono font-bold">
+                            <span className="text-[10px] md:text-[9px] text-slate-400 font-mono font-bold">
                               #{examen.codigo}
                             </span>
                           </div>
@@ -171,11 +171,11 @@ export function ExamSearch({
 
                         <div className="shrink-0">
                           {isSelected ? (
-                            <Badge className="bg-brand-dark text-brand-mint border-0 text-[8px] h-4.5 px-2 uppercase font-black tracking-tighter shadow-sm">
+                            <Badge className="bg-brand-dark text-brand-mint border-0 text-[10px] md:text-[8px] h-5 px-2.5 uppercase font-black tracking-tighter shadow-sm">
                               Agregado
                             </Badge>
                           ) : (
-                            <span className="text-[10px] text-brand-mint opacity-0 group-hover:opacity-100 font-black uppercase tracking-tighter transition-all translate-x-1 group-hover:translate-x-0">
+                            <span className="text-[11px] text-brand-mint opacity-100 md:opacity-0 group-hover:opacity-100 font-black uppercase tracking-tighter transition-all translate-x-0 md:translate-x-1 md:group-hover:translate-x-0">
                               Añadir +
                             </span>
                           )}
