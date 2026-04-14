@@ -29,7 +29,8 @@ import {
   Heart,
   Trash2,
   PlusCircle,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
@@ -943,7 +944,7 @@ export default function CotizadorPage() {
                       Sucursal Vitacura: Av. Vitacura #8620 • +56 2 2933 6740
                     </p>
                     <p className="text-[9px] leading-relaxed opacity-60 font-medium">
-                      Dirigirse al 3er piso - Policlínico Tabancura
+                      Dirigirse a Recepción del 3er piso - Policlínico Tabancura
                     </p>
                     <div className="flex gap-2 pt-2">
                       <a href="https://www.policlinicotabancura.cl" target="_blank" className={`flex-1 text-[9px] font-black text-center py-2 rounded-xl uppercase border transition-all ${pdfUrl ? 'border-white/20 text-white hover:bg-white/10' : 'border-slate-200 text-brand-dark bg-white hover:bg-slate-50 hover:border-slate-300 shadow-sm'}`}>Sitio Web</a>
@@ -1181,11 +1182,13 @@ export default function CotizadorPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="outline"
-                  className="border-slate-200 text-slate-600 font-bold h-11 text-xs flex items-center gap-2"
-                  onClick={() => pdfUrl && window.open(pdfUrl, '_blank')}
+                  className="border-slate-200 text-slate-600 font-bold h-11 text-xs flex items-center justify-center gap-2"
+                  asChild
                 >
-                  <FileText className="h-4 w-4" />
-                  Ver PDF
+                  <a href={pdfUrl ? `${API_URL}${pdfUrl}` : '#'} target="_blank" download="cotizacion.pdf" rel="noopener noreferrer">
+                    <Download className="h-4 w-4" />
+                    Descargar PDF
+                  </a>
                 </Button>
                 <Button
                   variant="ghost"
@@ -1204,7 +1207,7 @@ export default function CotizadorPage() {
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-brand-dark uppercase tracking-tighter">Lugar de Atención</span>
                 <span className="text-[11px] text-slate-500 font-medium">Sucursal Vitacura, Av. Vitacura #8620 (+56 2 2933 6740)</span>
-                <span className="text-[10px] text-slate-400 font-bold">Dirigirse al 3er Piso</span>
+                <span className="text-[10px] text-slate-400 font-bold">Dirigirse a Recepción del 3er Piso</span>
               </div>
             </div>
           </div>

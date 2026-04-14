@@ -512,7 +512,7 @@ export default function GuestPage() {
                   <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
                     <div className="space-y-1">
                       <p className="text-[11px] font-bold text-slate-700">Sucursal Vitacura: Av. Vitacura #8620 • +56 2 2933 6740</p>
-                      <p className="text-[10px] text-slate-500 font-bold">Dirigirse al 3er piso - Policlínico Tabancura</p>
+                      <p className="text-[10px] text-slate-500 font-bold">Dirigirse a Recepción del 3er piso - Policlínico Tabancura</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -654,13 +654,13 @@ export default function GuestPage() {
 
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    if (pdfUrl) window.open(`${API_URL}${pdfUrl}`, '_blank');
-                  }}
+                  asChild
                   className="w-full h-14 border-slate-200 text-slate-700 font-bold rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-50 transition-all active:scale-95"
                 >
-                  <Download className="h-5 w-5" />
-                  DESCARGAR ARCHIVO PDF
+                  <a href={pdfUrl ? `${API_URL}${pdfUrl}` : '#'} target="_blank" download="cotizacion.pdf" rel="noopener noreferrer">
+                    <Download className="h-5 w-5" />
+                    DESCARGAR ARCHIVO PDF
+                  </a>
                 </Button>
               </div>
               
@@ -671,7 +671,7 @@ export default function GuestPage() {
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black text-brand-dark uppercase tracking-widest">Lugar de Atención</span>
                   <span className="text-[11px] text-slate-600 font-bold">Sucursal Vitacura, Av. Vitacura #8620</span>
-                  <span className="text-[10px] text-slate-400 font-medium">Dirigirse al 3er Piso (+56 2 2933 6740)</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Dirigirse a Recepción del 3er Piso (+56 2 2933 6740)</span>
                 </div>
               </div>
 
