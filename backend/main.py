@@ -10,10 +10,15 @@ import uuid
 from datetime import datetime
 
 from database import SessionLocal, get_db, Arancel, Paquete, PaqueteExamen, Cotizacion, DetalleCotizacion
-from schemas import ExamenSchema, PaqueteSchema, CotizacionRequest
-from utils import obtener_ahora_chile
 from schemas import ExamenSchema, PaqueteSchema, CotizacionRequest, LoginRequest, AdminStats, UpdatePriceRequest
+from utils import obtener_ahora_chile
 from sqlalchemy import func, case
+from pdf_generator import generar_cotizacion_pdf
+
+# Configuración de directorios
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PDF_OUTPUT_DIR = os.path.join(BASE_DIR, "generated_pdfs")
+os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
 
 app = FastAPI(title="Cotizador Policlínico Tabancura API", version="1.0.0")
 
@@ -120,15 +125,16 @@ def post_cotizar(request: CotizacionRequest, db: Session = Depends(get_db)):
         df_sel = pd.DataFrame(examenes_list)
 
         # Generar PDF usando el generador histórico con los totales CORRECTOS
-        generar_cotizacion_pdf(
+        pdf_path = generar_cotizacion_pdf(
             folio_cot, folio_om, ahora.strftime("%d/%m/%Y %H:%M:%S"),
             request.nombre_paciente, request.documento_id, 
             f_nac_dt, request.prevision,
             df_sel, int(t_f), int(t_c), int(t_pg), int(t_pp),
-            pack_nombre=request.pack_activo, incluir_om=(request.pack_activo is not None)
+            pack_nombre=request.pack_activo, incluir_om=(request.pack_activo is not None),
+            output_dir=PDF_OUTPUT_DIR
         )
         
-        filename = f"Cot_{folio_cot}.pdf"
+        filename = os.path.basename(pdf_path)
         
         return {
             "success": True,
@@ -240,10 +246,10 @@ def update_arancel(codigo: str, request: UpdatePriceRequest, db: Session = Depen
 from fastapi.responses import FileResponse
 @app.get("/api/pdf/{filename}")
 def get_pdf(filename: str):
-    file_path = os.path.join(os.path.dirname(__file__), filename)
+    file_path = os.path.join(PDF_OUTPUT_DIR, filename)
     if os.path.exists(file_path):
         return FileResponse(file_path, media_type='application/pdf', filename=filename)
-    raise HTTPException(status_code=404, detail="Archivo PDF no encontrado")
+    raise HTTPException(status_code=404, detail=f"Archivo PDF no encontrado en {file_path}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

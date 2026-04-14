@@ -39,7 +39,7 @@ class PDF(FPDF):
         self.cell(0, 4, f"Página {pagina_relativa} de {total_relativo}", ln=1, align='R')
         self.ln(5)
 
-def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc_id, fecha_nac, prevision, df_sel, t_f, t_c, t_pg, t_pp, pack_nombre=None, incluir_om=False):
+def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc_id, fecha_nac, prevision, df_sel, t_f, t_c, t_pg, t_pp, pack_nombre=None, incluir_om=False, output_dir=None):
     
     def renderizar_contenido(pdf_obj, fase_conteo=False):
         """Función interna para renderizar el contenido. Se llama dos veces."""
@@ -212,7 +212,12 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
     pdf_real.total_paginas_seccion = final_counts
     renderizar_contenido(pdf_real, fase_conteo=False)
 
-    path = f"Cot_{folio_cot}.pdf"
+    filename = f"Cot_{folio_cot}.pdf"
+    if output_dir:
+        path = os.path.join(output_dir, filename)
+    else:
+        path = filename
+        
     pdf_real.output(path)
     return path
 
