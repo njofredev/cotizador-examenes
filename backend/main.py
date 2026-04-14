@@ -178,12 +178,23 @@ def get_admin_stats(db: Session = Depends(get_db), auth=Depends(check_admin_auth
         
         top_list = [{"nombre": r[0], "cantidad": r[1]} for r in top_ex]
         
+        # Datos de tendencia (Últimos 15 días)
+        # Nota: Usamos func.date para agrupar por día (compatibilidad SQLite/Postgres varía un poco, corregimos para Postgres)
+        trend_results = db.query(
+            func.date(Cotizacion.fecha_cotizacion).label('fecha'),
+            func.count(Cotizacion.id).label('cantidad')
+        ).filter(Cotizacion.fecha_cotizacion >= ahora.replace(day=ahora.day-15 if ahora.day > 15 else 1)) \
+         .group_by('fecha').order_by('fecha').all()
+        
+        trend_list = [{"fecha": r[0].strftime("%d/%m"), "cantidad": r[1]} for r in trend_results]
+        
         return {
             "total_cotizaciones": total_cots,
             "total_hoy": total_hoy,
             "monto_fonasa": int(monto_f),
             "monto_particular": int(monto_p),
-            "top_examenes": top_list
+            "top_examenes": top_list,
+            "trend_data": trend_list
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al calcular estadísticas: {e}")

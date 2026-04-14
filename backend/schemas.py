@@ -58,6 +58,7 @@ class AdminStats(BaseModel):
     monto_fonasa: int
     monto_particular: int
     top_examenes: List[dict]
+    trend_data: List[dict]
 
 class UpdatePriceRequest(BaseModel):
     valor_bono_fonasa: int
