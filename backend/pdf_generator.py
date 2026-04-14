@@ -13,8 +13,9 @@ class PDF(FPDF):
         self.total_paginas_seccion = {"COTIZACIÓN": 0, "ORDEN MÉDICA": 0}
 
     def header(self):
-        if os.path.exists("logo_vec.svg"):
-            self.image("logo_vec.svg", x=10, y=8, w=15)
+        logo_path = os.path.join(os.path.dirname(__file__), "logo_vec.svg")
+        if os.path.exists(logo_path):
+            self.image(logo_path, x=10, y=8, w=15)
         
         folio = self.folio_cot if self.seccion_actual == "COTIZACIÓN" else self.folio_om
         
@@ -187,11 +188,12 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
                 pdf_obj.cell(w_om[1], 7, f" {str(r['Nombre'])[:75]}", 1)
                 pdf_obj.cell(w_om[2], 7, str(int(r['Cant'])), 1, 1, 'C')
 
-            if os.path.exists("firma_prado.png"):
+            firma_path = os.path.join(os.path.dirname(__file__), "firma_prado.png")
+            if os.path.exists(firma_path):
                 if pdf_obj.get_y() > 230: pdf_obj.add_page()
                 pdf_obj.ln(10)
                 curr_y = pdf_obj.get_y()
-                pdf_obj.image("firma_prado.png", x=77.5, y=curr_y, w=50)
+                pdf_obj.image(firma_path, x=77.5, y=curr_y, w=50)
                 pdf_obj.set_y(curr_y + 22)
                 pdf_obj.set_font("Arial", 'B', 8.5)
                 pdf_obj.cell(0, 4, "Dr. Cristian Prado Jara", ln=1, align='C')
