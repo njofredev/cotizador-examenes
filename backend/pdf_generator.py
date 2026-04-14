@@ -13,7 +13,7 @@ class PDF(FPDF):
         self.total_paginas_seccion = {"COTIZACIÓN": 0, "ORDEN MÉDICA": 0}
 
     def header(self):
-        logo_path = os.path.join(os.path.dirname(__file__), "logo_vec.svg")
+        logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
         if os.path.exists(logo_path):
             self.image(logo_path, x=10, y=8, w=15)
         

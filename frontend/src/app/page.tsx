@@ -770,7 +770,7 @@ export default function CotizadorPage() {
                       <span className="hidden sm:inline">Limpiar</span>
                     </Button>
                     <Badge variant="secondary" className="bg-brand-dark text-brand-mint hover:bg-brand-dark font-black px-3 py-1 rounded-full border-none">
-                      {selectedExams.length} ítems
+                      {selectedExams.reduce((acc, curr) => acc + curr.cantidad, 0)} ítems
                     </Badge>
                   </div>
                 </div>

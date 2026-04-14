@@ -327,8 +327,8 @@ export default function GuestPage() {
                     Exámenes seleccionados
                   </h2>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="text-slate-400 border-slate-200">
-                      {selectedExams.length} ítems
+                    <Badge className="bg-brand-dark hover:bg-brand-dark/90 text-brand-mint font-black h-8 px-3 rounded-full border-none">
+                      {selectedExams.reduce((acc, curr) => acc + curr.cantidad, 0)} ítems
                     </Badge>
                     <Button
                       variant="ghost"
