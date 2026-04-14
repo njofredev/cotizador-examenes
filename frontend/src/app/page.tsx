@@ -838,31 +838,53 @@ export default function CotizadorPage() {
           {!isPatientChecked ? (
             <IntroCard />
           ) : (
-            <Card className={`border-none shadow-xl ${pdfUrl ? 'bg-primary text-white' : 'bg-white'} animate-in zoom-in-95 duration-500 rounded-3xl overflow-hidden`}>
-              <div className={cn("h-1.5 w-full", pdfUrl ? "bg-white/20" : "bg-gradient-to-r from-brand-mint to-brand-dark")} />
-              <CardHeader>
-                <CardTitle className="text-xl font-black flex items-center justify-between tracking-tight">
-                  Resumen Cotización
-                  {pdfUrl && <CheckCircle2 className="h-6 w-6 text-brand-mint animate-pulse" />}
-                </CardTitle>
-                <CardDescription className={cn("font-bold text-[10px] uppercase tracking-widest", pdfUrl ? 'text-blue-100' : 'text-slate-400')}>Cifras actualizadas</CardDescription>
+            <Card className={cn(
+              "border-none shadow-xl animate-in zoom-in-95 duration-500 rounded-3xl overflow-hidden relative",
+              pdfUrl ? "bg-gradient-to-b from-brand-dark to-slate-900 text-white shadow-brand-mint/10" : "bg-white"
+            )}>
+              {pdfUrl && <div className="absolute top-0 right-0 w-32 h-32 bg-brand-mint/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />}
+              <div className={cn("relative h-1.5 w-full", pdfUrl ? "bg-brand-mint" : "bg-gradient-to-r from-brand-mint to-brand-dark")} />
+              <CardHeader className="relative z-10">
+                {pdfUrl ? (
+                  <div className="flex items-center gap-3 mb-2 animate-in fade-in slide-in-from-left-4 duration-500">
+                    <div className="bg-brand-mint text-brand-dark p-2 rounded-full shadow-lg shadow-brand-mint/20">
+                      <CheckCircle2 className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl font-black tracking-tight text-white">¡Cotización Lista!</CardTitle>
+                      <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-brand-mint/80 mt-1">
+                        Presupuesto guardado y generado
+                      </CardDescription>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <CardTitle className="text-xl font-black flex items-center justify-between tracking-tight">
+                      Resumen Cotización
+                    </CardTitle>
+                    <CardDescription className="font-bold text-[10px] uppercase tracking-widest text-slate-400">Cifras actualizadas</CardDescription>
+                  </>
+                )}
               </CardHeader>
-              <CardContent className="space-y-6 py-4">
+              <CardContent className="space-y-6 py-4 relative z-10">
                 <div className="flex justify-between items-center px-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest", pdfUrl ? "text-white/50" : "text-slate-400")}>
                     {isFonasa ? 'Valor Bono Fonasa' : 'Arancel Gral. (Isapre/Part.)'}
                   </span>
-                  <span className={cn("text-lg font-black font-mono", pdfUrl ? "text-white" : "text-slate-600")}>
+                  <span className={cn("text-lg font-black font-mono", pdfUrl ? "text-white/80" : "text-slate-600")}>
                     ${totalV1.toLocaleString('es-CL')}
                   </span>
                 </div>
-                <Separator className={pdfUrl ? 'bg-white/10' : 'bg-slate-50'} />
-                <div className="flex justify-between items-end bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
+                <Separator className={pdfUrl ? 'bg-white/5' : 'bg-slate-50'} />
+                <div className={cn(
+                  "flex justify-between items-end p-4 rounded-2xl border",
+                  pdfUrl ? "bg-white/5 border-white/10 backdrop-blur-sm" : "bg-slate-50/50 border-slate-50"
+                )}>
                   <div>
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1">
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest block mb-1", pdfUrl ? "text-white/60" : "text-slate-400")}>
                       {isFonasa ? 'Tu Copago Final' : 'Total a Pagar'}
                     </span>
-                    <span className={cn("text-[9px] font-black uppercase tracking-tighter", pdfUrl ? "text-blue-100" : "text-brand-mint")}>
+                    <span className={cn("text-[9px] font-black uppercase tracking-tighter", pdfUrl ? "text-brand-mint" : "text-brand-mint")}>
                       {isFonasa ? 'A pagar en Vitacura' : 'Arancel Mi Vita (Preferencial)'}
                     </span>
                   </div>
@@ -922,10 +944,12 @@ export default function CotizadorPage() {
                   </>
                 ) : (
                   <>
-                    <Button variant="secondary" className="w-full h-14 text-base font-black text-brand-dark bg-brand-mint hover:bg-brand-mint/90 shadow-brand-mint/20 rounded-2xl" onClick={() => window.open(`${API_URL}${pdfUrl}`, '_blank')}>
-                      <FileDown className="mr-2 h-6 w-6" /> Descargar PDF
+                    <Button variant="secondary" className="w-full h-14 text-base font-black text-brand-dark bg-brand-mint hover:bg-brand-mint/90 shadow-lg shadow-brand-mint/20 rounded-2xl ring-2 ring-brand-mint/50 ring-offset-2 ring-offset-brand-dark scale-100 hover:scale-[1.02] transition-all duration-300" asChild>
+                      <a href={pdfUrl ? `${API_URL}${pdfUrl}` : '#'} target="_blank" download="cotizacion.pdf" rel="noopener noreferrer">
+                        <FileDown className="mr-2 h-6 w-6" /> Descargar PDF
+                      </a>
                     </Button>
-                    <Button variant="ghost" className="w-full text-white/50 hover:text-white hover:bg-white/10 font-bold text-xs uppercase tracking-widest" onClick={reset}>
+                    <Button variant="ghost" className="w-full text-white/40 hover:text-white hover:bg-white/10 font-bold text-xs uppercase tracking-widest mt-2" onClick={reset}>
                       <RefreshCw className="mr-2 h-4 w-4" /> Nueva Cotización
                     </Button>
                   </>
