@@ -353,10 +353,10 @@ export default function CotizadorPage() {
           codigo: i.examen.codigo,
           nombre: i.examen.nombre,
           cantidad: i.cantidad,
-          valor_bono_fonasa: i.examen.valor_bono_fonasa * i.cantidad,
-          valor_copago: i.examen.valor_copago * i.cantidad,
-          valor_particular_general: i.examen.valor_particular_general * i.cantidad,
-          valor_particular_preferencial: i.examen.valor_particular_preferencial * i.cantidad
+          valor_bono_fonasa: i.examen.valor_bono_fonasa,
+          valor_copago: i.examen.valor_copago,
+          valor_particular_general: i.examen.valor_particular_general,
+          valor_particular_preferencial: i.examen.valor_particular_preferencial
         }))
       };
       const res = await postCotizar(payload);
