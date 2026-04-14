@@ -214,7 +214,7 @@ export default function GuestPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-[#F8FAFC] pb-12">
+      <div className="min-h-screen bg-[#F8FAFC] pb-48 md:pb-12">
         <Toaster position="top-center" richColors />
 
         {/* MOBILE STEP INDICATOR */}
