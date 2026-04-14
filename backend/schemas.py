@@ -47,3 +47,20 @@ class CotizacionRequest(BaseModel):
     prevision: str
     pack_activo: Optional[str] = None
     examenes: List[CotizacionExamen]
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class AdminStats(BaseModel):
+    total_cotizaciones: int
+    total_hoy: int
+    monto_fonasa: int
+    monto_particular: int
+    top_examenes: List[dict]
+
+class UpdatePriceRequest(BaseModel):
+    valor_bono_fonasa: int
+    valor_copago: int
+    valor_particular_general: int
+    valor_particular_preferencial: int

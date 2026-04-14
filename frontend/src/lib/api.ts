@@ -60,5 +60,10 @@ export const getExamenes = () => api.get<Examen[]>('/api/examenes', withRetry);
 export const getPaquetes = () => api.get<Paquete[]>('/api/paquetes', withRetry);
 export const getPaciente = (docId: string) => api.get(`/api/paciente/${docId}`, withRetry);
 export const postCotizar = (data: any) => api.post('/api/cotizar', data);
- // No retry for POST to avoid double submission
+
+// --- Admin Endpoints ---
+export const adminLogin = (credentials: any) => api.post('/api/admin/login', credentials);
+export const getAdminStats = (token: string) => api.get('/api/admin/stats', { headers: { 'Authorization': `Bearer ${token}`, 'password': token } }); 
+export const getAdminHistory = (token: string) => api.get('/api/admin/history', { headers: { 'password': token } });
+export const updateArancel = (codigo: string, data: any, token: string) => api.put(`/api/admin/aranceles/${codigo}`, data, { headers: { 'password': token } });
 

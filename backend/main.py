@@ -11,8 +11,9 @@ from datetime import datetime
 
 from database import SessionLocal, get_db, Arancel, Paquete, PaqueteExamen, Cotizacion, DetalleCotizacion
 from schemas import ExamenSchema, PaqueteSchema, CotizacionRequest
-from pdf_generator import generar_cotizacion_pdf
 from utils import obtener_ahora_chile
+from schemas import ExamenSchema, PaqueteSchema, CotizacionRequest, LoginRequest, AdminStats, UpdatePriceRequest
+from sqlalchemy import func, case
 
 app = FastAPI(title="Cotizador Policlínico Tabancura API", version="1.0.0")
 
@@ -137,6 +138,81 @@ def post_cotizar(request: CotizacionRequest, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error en el proceso de cotización: {e}")
+
+# --- RUTAS ADMINISTRATIVAS ---
+
+def check_admin_auth(password: str = None):
+    # En producción esto sería un JWT, aquí validamos contra el .env para simplicidad
+    valid_pass = os.getenv("ADMIN_PASSWORD", "Tabancura2026!")
+    if password != valid_pass:
+        raise HTTPException(status_code=401, detail="No autorizado")
+    return True
+
+@app.post("/api/admin/login")
+def admin_login(request: LoginRequest):
+    valid_user = os.getenv("ADMIN_USER", "admin")
+    valid_pass = os.getenv("ADMIN_PASSWORD", "Tabancura2026!")
+    
+    if request.username == valid_user and request.password == valid_pass:
+        return {"success": True, "token": valid_pass} # Usamos el pass como token simple
+    raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+
+@app.get("/api/admin/stats", response_model=AdminStats)
+def get_admin_stats(db: Session = Depends(get_db), auth=Depends(check_admin_auth)):
+    try:
+        ahora = obtener_ahora_chile()
+        inicio_hoy = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        total_cots = db.query(func.count(Cotizacion.id)).scalar()
+        total_hoy = db.query(func.count(Cotizacion.id)).filter(Cotizacion.fecha_cotizacion >= inicio_hoy).scalar()
+        
+        # Montos acumulados (Copagos reales)
+        monto_f = db.query(func.sum(Cotizacion.total_copago)).filter(Cotizacion.prevision.ilike('fonasa')).scalar() or 0
+        monto_p = db.query(func.sum(Cotizacion.total_particular_pref)).filter(Cotizacion.prevision.ilike('particular')).scalar() or 0
+        
+        # Top 5 Exámenes (desde DetalleCotizacion)
+        top_ex = db.query(
+            DetalleCotizacion.nombre_examen, 
+            func.count(DetalleCotizacion.id).label('total')
+        ).group_by(DetalleCotizacion.nombre_examen).order_by(desc('total')).limit(5).all()
+        
+        top_list = [{"nombre": r[0], "cantidad": r[1]} for r in top_ex]
+        
+        return {
+            "total_cotizaciones": total_cots,
+            "total_hoy": total_hoy,
+            "monto_fonasa": int(monto_f),
+            "monto_particular": int(monto_p),
+            "top_examenes": top_list
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al calcular estadísticas: {e}")
+
+@app.get("/api/admin/history")
+def get_history(db: Session = Depends(get_db), auth=Depends(check_admin_auth)):
+    try:
+        results = db.query(Cotizacion).order_by(desc(Cotizacion.fecha_cotizacion)).limit(100).all()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener historial: {e}")
+
+@app.put("/api/admin/aranceles/{codigo}")
+def update_arancel(codigo: str, request: UpdatePriceRequest, db: Session = Depends(get_db), auth=Depends(check_admin_auth)):
+    try:
+        item = db.query(Arancel).filter(Arancel.codigo == codigo).first()
+        if not item:
+            raise HTTPException(status_code=404, detail="Examen no encontrado")
+        
+        item.valor_bono_fonasa = request.valor_bono_fonasa
+        item.valor_copago = request.valor_copago
+        item.valor_particular_general = request.valor_particular_general
+        item.valor_particular_preferencial = request.valor_particular_preferencial
+        
+        db.commit()
+        return {"success": True, "message": f"Precios de {codigo} actualizados"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al actualizar arancel: {e}")
 
 from fastapi.responses import FileResponse
 @app.get("/api/pdf/{filename}")

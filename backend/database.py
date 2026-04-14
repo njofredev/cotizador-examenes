@@ -6,6 +6,9 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
+# Intentar cargar desde backend/.env si no se cargó nada (útil para ejecución desde raíz)
+if not os.getenv("POSTGRES_HOST"):
+    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 # Conexión persistente
 DATABASE_URL = "postgresql://{user}:{password}@{host}:{port}/{database}".format(
