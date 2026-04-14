@@ -1,7 +1,7 @@
 import os
 import uvicorn
 import pandas as pd
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -141,7 +141,7 @@ def post_cotizar(request: CotizacionRequest, db: Session = Depends(get_db)):
 
 # --- RUTAS ADMINISTRATIVAS ---
 
-def check_admin_auth(password: str = None):
+def check_admin_auth(password: Optional[str] = Header(None)):
     # En producción esto sería un JWT, aquí validamos contra el .env para simplicidad
     valid_pass = os.getenv("ADMIN_PASSWORD", "Tabancura2026!")
     if password != valid_pass:
