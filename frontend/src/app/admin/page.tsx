@@ -291,7 +291,7 @@ export default function AdminDashboard() {
             <div className="mx-auto w-12 h-12 bg-brand-mint/10 rounded-xl flex items-center justify-center mb-4">
               <LogOut className="h-6 w-6 text-brand-mint rotate-180" />
             </div>
-            <CardTitle className="text-2xl font-black text-white px-2 tracking-tight">Acceso Administrativo</CardTitle>
+            <CardTitle className="text-2xl font-bold text-white px-2 tracking-tight">Acceso Administrativo</CardTitle>
             <CardDescription className="text-slate-400">Policlínico Tabancura / GESTIÓN</CardDescription>
           </CardHeader>
           <CardContent className="pt-4 pb-8">
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
                   className="bg-slate-800 border-slate-700 text-white h-12"
                 />
               </div>
-              <Button type="submit" disabled={isLoading} className="w-full h-12 bg-brand-mint hover:bg-brand-mint/90 text-brand-dark font-black text-sm uppercase tracking-widest mt-4">
+              <Button type="submit" disabled={isLoading} className="w-full h-12 bg-brand-mint hover:bg-brand-mint/90 text-brand-dark font-bold text-sm uppercase tracking-widest mt-4">
                 {isLoading ? 'Autenticando...' : 'Entrar al Panel'}
               </Button>
             </form>
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
                 <img src="/logo_vec.svg" alt="Tabancura" className="w-full h-full object-contain" />
               </div>
               <div>
-                <p className="text-lg font-black text-white tracking-tight leading-none">
+                <p className="text-lg font-bold text-white tracking-tight leading-none">
                    Policlínico <span className="text-white">Tabancura</span>
                 </p>
                 <p className="text-xs text-brand-mint font-bold uppercase tracking-[0.2em] mt-1 leading-none">/ ADMINISTRACIÓN</p>
@@ -360,8 +360,8 @@ export default function AdminDashboard() {
 
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right pr-4 border-r border-white/10">
-               <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Bienvenido,</p>
-               <p className="text-sm font-black text-white tracking-tight">Administrador Central</p>
+               <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">Bienvenido,</p>
+               <p className="text-sm font-bold text-white tracking-tight">Administrador Central</p>
             </div>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 gap-2 transition-all group">
               <LogOut className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" /> <span className="hidden sm:inline font-bold">Cerrar Sesión</span>
@@ -377,7 +377,7 @@ export default function AdminDashboard() {
           <div className="space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h1 className="text-4xl font-black text-white tracking-tighter">Resumen Global</h1>
+                <h1 className="text-4xl font-bold text-white tracking-tight">Resumen Global</h1>
                 <p className="text-slate-400 font-medium">Estado actual del flujo de atención clínica.</p>
               </div>
               <div className="flex gap-2">
@@ -400,7 +400,7 @@ export default function AdminDashboard() {
               <Card className="lg:col-span-2 bg-[#121927] border-white/5 shadow-2xl overflow-hidden group">
                  <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                       <CardTitle className="text-white font-black tracking-tight">Tendencia de Uso</CardTitle>
+                       <CardTitle className="text-white font-bold tracking-tight">Tendencia de Uso</CardTitle>
                        <CardDescription className="text-slate-500 text-xs">Cotizaciones diarias (Últimos 15 días)</CardDescription>
                     </div>
                     <BarChart className="text-brand-mint w-5 h-5 opacity-50" />
@@ -430,7 +430,7 @@ export default function AdminDashboard() {
               {/* Top Examenes Pie */}
               <Card className="lg:col-span-1 bg-[#121927] border-white/5 shadow-2xl">
                  <CardHeader>
-                    <CardTitle className="text-white font-black tracking-tight">Distribución</CardTitle>
+                    <CardTitle className="text-white font-bold tracking-tight">Distribución</CardTitle>
                     <CardDescription className="text-slate-500 text-xs">Exámenes más demandados</CardDescription>
                  </CardHeader>
                  <CardContent className="h-64 flex items-center justify-center pt-8">
@@ -466,7 +466,7 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h1 className="text-4xl font-black text-white tracking-tighter">Historial de Pacientes</h1>
+                <h1 className="text-4xl font-bold text-white tracking-tight">Historial de Pacientes</h1>
                 <p className="text-slate-400 font-medium">Búsqueda y gestión de folios generados.</p>
               </div>
               
@@ -507,22 +507,22 @@ export default function AdminDashboard() {
                  <table className="w-full text-left border-collapse">
                     <thead className="bg-[#090e1a] border-b border-white/5">
                       <tr>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Paciente</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Folio</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Previsión</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Fecha</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Total</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Paciente</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Folio</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Previsión</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Fecha</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 text-right">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {filteredHistory.length > 0 ? filteredHistory.map((row, idx) => (
                         <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
                           <td className="px-6 py-5">
-                            <p className="text-sm font-black text-white">{row.nombre_paciente}</p>
-                            <p className="text-[10px] font-bold text-slate-500 tracking-tighter uppercase">{row.documento_id}</p>
+                            <p className="text-sm font-bold text-white">{row.nombre_paciente}</p>
+                            <p className="text-[10px] font-bold text-slate-500 tracking-tight uppercase">{row.documento_id}</p>
                           </td>
                           <td className="px-6 py-5">
-                            <Badge className="bg-brand-mint/10 text-brand-mint border-brand-mint/20 font-black px-2 py-0.5">{row.folio}</Badge>
+                            <Badge className="bg-brand-mint/10 text-brand-mint border-brand-mint/20 font-bold px-2 py-0.5">{row.folio}</Badge>
                           </td>
                           <td className="px-6 py-5 text-sm font-bold text-slate-300">
                              {row.prevision}
@@ -531,7 +531,7 @@ export default function AdminDashboard() {
                             {new Date(row.fecha_cotizacion).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-5 text-right">
-                             <p className="text-sm font-black text-brand-mint">
+                             <p className="text-sm font-bold text-brand-mint">
                                ${(row.total_copago || 0).toLocaleString()}
                              </p>
                           </td>
@@ -556,14 +556,14 @@ export default function AdminDashboard() {
            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <h1 className="text-4xl font-black text-white tracking-tighter">Reportería Avanzada</h1>
+                  <h1 className="text-4xl font-bold text-white tracking-tight">Reportería Avanzada</h1>
                   <p className="text-slate-400 font-medium">Análisis detallado de la demanda y rentabilidad.</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <Card className="bg-[#121927] border-white/5 shadow-2xl p-6">
-                    <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                        <LucidePieChart className="text-brand-mint w-5 h-5"/> Mix de Seguros
                     </h3>
                     <div className="h-64">
@@ -596,19 +596,19 @@ export default function AdminDashboard() {
                  </Card>
 
                  <Card className="bg-[#121927] border-white/5 shadow-2xl p-6">
-                    <h3 className="text-lg font-black text-white mb-6">Resumen Ejecutivo</h3>
+                    <h3 className="text-lg font-bold text-white mb-6">Resumen Ejecutivo</h3>
                     <div className="space-y-6">
                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
                           <p className="text-xs font-bold text-slate-500 uppercase mb-1">Volumen Promedio Diario</p>
-                          <p className="text-2xl font-black text-white">{(stats?.total_cotizaciones / 30).toFixed(1)} <span className="text-xs text-slate-500">cots/día</span></p>
+                          <p className="text-2xl font-bold text-white">{(stats?.total_cotizaciones / 30).toFixed(1)} <span className="text-xs text-slate-500">cots/día</span></p>
                        </div>
                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
                           <p className="text-xs font-bold text-slate-500 uppercase mb-1">Examen más solicitado</p>
-                          <p className="text-xl font-black text-brand-mint tracking-tight">{stats?.top_examenes[0]?.nombre || 'N/A'}</p>
+                          <p className="text-xl font-bold text-brand-mint tracking-tight">{stats?.top_examenes[0]?.nombre || 'N/A'}</p>
                        </div>
                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
                           <p className="text-xs font-bold text-slate-500 uppercase mb-1">Ticket Promedio</p>
-                          <p className="text-2xl font-black text-blue-400">${((stats?.monto_fonasa + stats?.monto_particular) / stats?.total_cotizaciones || 0).toLocaleString()}</p>
+                          <p className="text-2xl font-bold text-blue-400">${((stats?.monto_fonasa + stats?.monto_particular) / stats?.total_cotizaciones || 0).toLocaleString()}</p>
                        </div>
                     </div>
                  </Card>
@@ -620,7 +620,7 @@ export default function AdminDashboard() {
         {activeTab === 'exportar' && (
            <div className="max-w-4xl mx-auto space-y-8 animate-in zoom-in-95 duration-500">
               <div className="text-center space-y-2">
-                 <h1 className="text-4xl font-black text-white tracking-tighter">Centro de Descargas</h1>
+                 <h1 className="text-4xl font-bold text-white tracking-tight">Centro de Descargas</h1>
                  <p className="text-slate-400">Exporta la información para auditorías o reportes externos.</p>
               </div>
 
@@ -658,7 +658,7 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                <div>
-                  <h1 className="text-4xl font-black text-white tracking-tighter">Maestro de Aranceles</h1>
+                  <h1 className="text-4xl font-bold text-white tracking-tight">Maestro de Aranceles</h1>
                   <p className="text-slate-400 font-medium">Actualización masiva de precios del catálogo.</p>
                </div>
                <div className="w-full md:w-64 relative">
@@ -675,7 +675,7 @@ export default function AdminDashboard() {
             <Card className="bg-[#121927] border-white/5 shadow-2xl overflow-hidden ring-1 ring-white/5">
                <div className="overflow-x-auto">
                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-[#090e1a] border-b border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <thead className="bg-[#090e1a] border-b border-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
                        <tr>
                          <th className="px-6 py-4">Cod / Examen</th>
                          <th className="px-6 py-4">Fonasa / Copago</th>
@@ -687,17 +687,17 @@ export default function AdminDashboard() {
                        {paginatedExams.map((ex, idx) => (
                           <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
                              <td className="px-6 py-5 max-w-sm">
-                                <p className="text-[10px] font-black text-slate-500 tracking-widest">{ex.codigo}</p>
-                                <p className="text-sm font-black text-white leading-tight group-hover:text-brand-mint transition-colors cursor-default">{ex.nombre}</p>
+                                <p className="text-[10px] font-bold text-slate-500 tracking-widest">{ex.codigo}</p>
+                                <p className="text-sm font-bold text-white leading-tight group-hover:text-brand-mint transition-colors cursor-default">{ex.nombre}</p>
                              </td>
                              <td className="px-6 py-5">
                                 <div className="space-y-1">
                                    <div className="flex items-center gap-2">
-                                      <span className="text-[10px] bg-blue-500/10 text-blue-400 font-black px-1 rounded">F</span>
+                                      <span className="text-[10px] bg-blue-500/10 text-blue-400 font-bold px-1 rounded">F</span>
                                       <span className="text-sm font-bold text-white">${ex.valor_bono_fonasa.toLocaleString()}</span>
                                    </div>
                                    <div className="flex items-center gap-2">
-                                      <span className="text-[10px] bg-brand-mint/10 text-brand-mint font-black px-1 rounded">C</span>
+                                      <span className="text-[10px] bg-brand-mint/10 text-brand-mint font-bold px-1 rounded">C</span>
                                       <span className="text-sm font-bold text-brand-mint">${ex.valor_copago.toLocaleString()}</span>
                                    </div>
                                 </div>
@@ -705,12 +705,12 @@ export default function AdminDashboard() {
                              <td className="px-6 py-5">
                                 <div className="space-y-1">
                                    <div className="flex items-center gap-2">
-                                      <span className="text-[10px] bg-white/5 text-slate-400 font-black px-1 rounded">G</span>
+                                      <span className="text-[10px] bg-white/5 text-slate-400 font-bold px-1 rounded">G</span>
                                       <span className="text-sm font-bold text-slate-300">${ex.valor_particular_general.toLocaleString()}</span>
                                    </div>
                                    <div className="flex items-center gap-2">
-                                      <span className="text-[10px] bg-brand-mint/5 text-brand-mint font-black px-1 rounded">P</span>
-                                      <span className="text-sm font-black text-brand-mint">${(ex.valor_particular_preferencial).toLocaleString()}</span>
+                                      <span className="text-[10px] bg-brand-mint/5 text-brand-mint font-bold px-1 rounded">P</span>
+                                      <span className="text-sm font-bold text-brand-mint">${(ex.valor_particular_preferencial).toLocaleString()}</span>
                                    </div>
                                 </div>
                              </td>
@@ -731,7 +731,7 @@ export default function AdminDashboard() {
                </div>
                
                <div className="bg-[#090e1a] border-t border-white/5 p-4 flex items-center justify-between">
-                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-4">Página {examPage} de {totalExamPages}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-4">Página {examPage} de {totalExamPages}</p>
                   <div className="flex gap-2 pr-4">
                     <Button 
                       variant="outline" 
@@ -764,10 +764,10 @@ export default function AdminDashboard() {
          <DialogContent className="bg-[#090e1a] border-white/10 text-white max-w-sm rounded-[32px] p-0 overflow-hidden ring-1 ring-brand-mint/20">
             <div className="bg-brand-mint/5 p-8 pb-4">
                <DialogHeader>
-                  <DialogTitle className="text-2xl font-black tracking-tighter">Editar Arancel</DialogTitle>
+                  <DialogTitle className="text-2xl font-bold tracking-tight">Editar Arancel</DialogTitle>
                   <DialogDescription className="text-slate-400 pt-2 font-medium">
                      Estás actualizando la base de datos oficial para: <br/>
-                     <span className="text-brand-mint font-black text-sm uppercase tracking-tight block mt-2">{editingExamen?.nombre}</span>
+                     <span className="text-brand-mint font-bold text-sm uppercase tracking-tight block mt-2">{editingExamen?.nombre}</span>
                   </DialogDescription>
                </DialogHeader>
             </div>
@@ -783,7 +783,7 @@ export default function AdminDashboard() {
 
             <div className="bg-white/[0.02] p-6 flex gap-3 justify-end border-t border-white/5">
                 <Button variant="ghost" onClick={() => setIsEditModalOpen(false)} className="text-slate-400 font-bold hover:text-white">Descartar</Button>
-                <Button onClick={handleUpdatePrice} disabled={isLoading} className="bg-brand-mint hover:bg-brand-mint/90 text-brand-dark font-black px-6 rounded-xl transition-all">
+                <Button onClick={handleUpdatePrice} disabled={isLoading} className="bg-brand-mint hover:bg-brand-mint/90 text-brand-dark font-bold px-6 rounded-xl transition-all">
                    {isLoading ? 'Guardando...' : 'Aplicar Cambios'}
                 </Button>
             </div>
@@ -798,7 +798,7 @@ function NavButton({ children, active, onClick, icon }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all duration-300",
+        "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all duration-300",
         active 
           ? "bg-brand-mint text-brand-dark shadow-lg shadow-brand-mint/20" 
           : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -829,12 +829,12 @@ function StatCard({ title, value, icon, sub, color, highlight }: any) {
                 {React.cloneElement(icon, { size: 24 })}
              </div>
              {highlight && (
-               <Badge className="bg-brand-mint/20 text-brand-mint border-none text-[8px] font-black tracking-widest">EN VIVO</Badge>
+               <Badge className="bg-brand-mint/20 text-brand-mint border-none text-[8px] font-bold tracking-widest">EN VIVO</Badge>
              )}
           </div>
           <div>
-             <p className="text-3xl font-black text-white tracking-tighter mb-0.5">{value}</p>
-             <p className="text-xs font-black text-slate-300 uppercase tracking-widest">{title}</p>
+             <p className="text-3xl font-bold text-white tracking-tight mb-0.5">{value}</p>
+             <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">{title}</p>
              <p className="text-[10px] text-slate-500 font-bold mt-2 uppercase tracking-tight">{sub}</p>
           </div>
        </CardContent>
@@ -845,7 +845,7 @@ function StatCard({ title, value, icon, sub, color, highlight }: any) {
 function PriceInput({ label, value, onChange }: any) {
   return (
     <div className="space-y-1.5">
-       <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider pl-1">{label}</p>
+       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">{label}</p>
        <Input 
          type="number" 
          value={value || 0}
@@ -870,7 +870,7 @@ function ExportCard({ title, desc, icon, onClick, color = "mint" }: any) {
              <div className={cn("w-20 h-20 rounded-[2rem] flex items-center justify-center mb-6 transition-all duration-500", colorMap[color])}>
                 {icon}
              </div>
-             <p className="text-xl font-black text-white mb-2">{title}</p>
+             <p className="text-xl font-bold text-white mb-2">{title}</p>
              <p className="text-xs text-slate-500 font-medium px-4">{desc}</p>
           </CardContent>
        </Card>
