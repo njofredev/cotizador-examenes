@@ -1,30 +1,41 @@
 # 🏥 Cotizador de Exámenes - Policlínico Tabancura
 
-Sistema profesional desarrollado en **Python** y **Streamlit** para la cotización automatizada de exámenes médicos y generación de órdenes preventivas.
+Sistema profesional de cotización automatizada de exámenes médicos y generación de órdenes preventivas. El proyecto ha evolucionado de una herramienta interna a una aplicación web moderna y escalable.
 
-## 🚀 Características Principales
+## 🚀 Características Principales (v2)
 
-- **Buscador Inteligente**: Filtrado dinámico de exámenes por nombre o código.
-- **Paquetes Preventivos**: Carga automatizada de grupos de exámenes predefinidos con un solo clic.
-- **Gestión de Previsiones**: Cálculo en tiempo real de copagos para **Fonasa** y valores para pacientes **Particulares**.
-- **Control de Identidad**: Validación de RUT Nacional y documentos extranjeros.
-- **Generación de PDF**: Creación instantánea de cotizaciones y órdenes médicas con folios únicos y firma digital.
-- **Persistencia en Base de Datos**: Registro histórico de cotizaciones generadas.
+- **Buscador Inteligente**: Filtrado dinámico de exámenes por nombre o código con una interfaz reactiva.
+- **Packs de Exámenes**: Configuración dinámica de paquetes (Chequeos Generales, Preventivos, etc.) con carga instantánea.
+- **Motor de Cálculo Multinivel**: Gestión de precios Fonasa y Particulares con lógica de copago automatizada.
+- **Diseño Mobile-First**: Experiencia optimizada para smartphones con tarjetas táctiles y barras de acción persistentes.
+- **Generación de PDF**: Motor de alta fidelidad para documentos legales, órdenes médicas con firma digital y cotizaciones oficiales.
+- **Validación Avanzada**: Control estricto de identidad mediante algoritmos de validación de RUT y pasaporte.
 
-## 🎨 Mejoras Recientes en Interfaz (UI/UX)
+---
 
-- **Aceptación de Términos**: Implementación de un sistema de aceptación integrado con enlace directo a popup de condiciones.
-- **Diseño Minimalista**: Interfaz premium centrada, con tipografía moderna y micro-animaciones.
-- **Componentes Adaptativos**: Los botones de acción se activan/desactivan y ocultan dinámicamente según el flujo del usuario.
-- **Footer Corporativo**: Pie de página con accesos directos a sitio web e Instagram oficial.
+## 📜 Historial de Versiones
 
-## 🛠️ Tecnologías
+### v2.0 - Arquitectura Fullstack Modern (Actual)
+*   **Frontend**: Next.js 14+ (App Router) con TypeScript.
+*   **Styling**: Tailwind CSS & Framer Motion para una experiencia premium y fluida.
+*   **Backend**: API robusta en Python con FastAPI.
+*   **Base de Datos**: PostgreSQL para persistencia de datos y gestión de aranceles.
+*   **Infraestructura**: Despliegue automatizado vía Coolify en servidores privados.
 
-- **Frontend/App**: [Streamlit](https://streamlit.io/)
-- **Lenguaje**: Python 3.x
-- **PDF Engine**: fpdf2
-- **Base de Datos**: PostgreSQL / Supabase
-- **Despliegue**: Docker / Coolify
+### v1.0 - Prototipo Basado en Datos
+*   **Tecnología**: Python & Streamlit.
+*   **Enfoque**: Herramienta de uso interno para validación de lógica de negocio y carga masiva de Excel.
+*   **Limitaciones**: Interfaz rígida y no optimizada para flujo público o dispositivos móviles.
+
+---
+
+## 🛠️ Stack Tecnológico (v2)
+
+*   **Framework**: [Next.js](https://nextjs.org/)
+*   **API**: [FastAPI](https://fastapi.tiangolo.com/)
+*   **Database**: [PostgreSQL](https://www.postgresql.org/)
+*   **PDF Engine**: fpdf2
+*   **Deployment**: Coolify / Docker
 
 ---
 
