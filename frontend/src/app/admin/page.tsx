@@ -480,7 +480,7 @@ export default function AdminDashboard() {
                       className="bg-[#121927] border-white/10 pl-10 h-10 text-white"
                     />
                  </div>
-                 <Select value={previsionFilter} onValueChange={setPrevisionFilter}>
+                 <Select value={previsionFilter} onValueChange={(v) => v && setPrevisionFilter(v)}>
                     <SelectTrigger className="w-32 bg-[#121927] border-white/10 text-white h-10">
                        <SelectValue placeholder="Previsión" />
                     </SelectTrigger>
@@ -490,7 +490,7 @@ export default function AdminDashboard() {
                        <SelectItem value="particular">Particular</SelectItem>
                     </SelectContent>
                  </Select>
-                 <Select value={dateFilter} onValueChange={setDateFilter}>
+                 <Select value={dateFilter} onValueChange={(v) => v && setDateFilter(v)}>
                     <SelectTrigger className="w-32 bg-[#121927] border-white/10 text-white h-10">
                        <SelectValue placeholder="Fecha" />
                     </SelectTrigger>
@@ -774,10 +774,10 @@ export default function AdminDashboard() {
             
             <div className="p-8 space-y-4">
                <div className="grid grid-cols-2 gap-4">
-                  <PriceInput label="Valor Fonasa" value={editingExamen?.valor_bono_fonasa} onChange={(v) => setEditingExamen(p => p ? {...p, valor_bono_fonasa: v}:null)} />
-                  <PriceInput label="Valor Copago" value={editingExamen?.valor_copago} onChange={(v) => setEditingExamen(p => p ? {...p, valor_copago: v}:null)} />
-                  <PriceInput label="Part. General" value={editingExamen?.valor_particular_general} onChange={(v) => setEditingExamen(p => p ? {...p, valor_particular_general: v}:null)} />
-                  <PriceInput label="Part. Preferencial" value={editingExamen?.valor_particular_preferencial} onChange={(v) => setEditingExamen(p => p ? {...p, valor_particular_preferencial: v}:null)} />
+                  <PriceInput label="Valor Fonasa" value={editingExamen?.valor_bono_fonasa} onChange={(v: number) => setEditingExamen(p => p ? {...p, valor_bono_fonasa: v}:null)} />
+                  <PriceInput label="Valor Copago" value={editingExamen?.valor_copago} onChange={(v: number) => setEditingExamen(p => p ? {...p, valor_copago: v}:null)} />
+                  <PriceInput label="Part. General" value={editingExamen?.valor_particular_general} onChange={(v: number) => setEditingExamen(p => p ? {...p, valor_particular_general: v}:null)} />
+                  <PriceInput label="Part. Preferencial" value={editingExamen?.valor_particular_preferencial} onChange={(v: number) => setEditingExamen(p => p ? {...p, valor_particular_preferencial: v}:null)} />
                </div>
             </div>
 
