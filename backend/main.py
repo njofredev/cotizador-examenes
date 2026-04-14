@@ -186,7 +186,19 @@ def get_admin_stats(db: Session = Depends(get_db), auth=Depends(check_admin_auth
         ).filter(Cotizacion.fecha_cotizacion >= ahora.replace(day=ahora.day-15 if ahora.day > 15 else 1)) \
          .group_by('fecha').order_by('fecha').all()
         
-        trend_list = [{"fecha": r[0].strftime("%d/%m"), "cantidad": r[1]} for r in trend_results]
+        # Formateo robusto de fechas (maneja datetime.date y strings de SQLite)
+        trend_list = []
+        for r in trend_results:
+            fecha_val = r[0]
+            if hasattr(fecha_val, 'strftime'):
+                fecha_str = fecha_val.strftime("%d/%m")
+            else:
+                # Si es string (SQLite), intentamos parsear o lo usamos directo
+                try:
+                    fecha_str = datetime.strptime(str(fecha_val), "%Y-%m-%d").strftime("%d/%m")
+                except:
+                    fecha_str = str(fecha_val)
+            trend_list.append({"fecha": fecha_str, "cantidad": r[1]})
         
         return {
             "total_cotizaciones": total_cots,

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { 
-  BarChart3, 
+  BarChart, 
   Users, 
   Database, 
   LogOut, 
@@ -19,10 +19,9 @@ import {
   Activity,
   ChevronRight,
   ChevronLeft,
-  FileDown,
   Download,
   Filter,
-  PieChart as PieChartIcon,
+  PieChart as LucidePieChart,
   ChevronDown
 } from 'lucide-react';
 import { 
@@ -353,9 +352,9 @@ export default function AdminDashboard() {
             <div className="hidden lg:flex gap-1 pl-2">
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<Activity className="w-4 h-4"/>}>Dashboard</NavButton>
               <NavButton active={activeTab === 'pacientes'} onClick={() => setActiveTab('pacientes')} icon={<Users className="w-4 h-4"/>}>Pacientes</NavButton>
-              <NavButton active={activeTab === 'reportes'} onClick={() => setActiveTab('reportes')} icon={<BarChart3 className="w-4 h-4"/>}>Reportería</NavButton>
+              <NavButton active={activeTab === 'reportes'} onClick={() => setActiveTab('reportes')} icon={<BarChart className="w-4 h-4"/>}>Reportería</NavButton>
               <NavButton active={activeTab === 'precios'} onClick={() => setActiveTab('precios')} icon={<Database className="w-4 h-4"/>}>Precios</NavButton>
-              <NavButton active={activeTab === 'exportar'} onClick={() => setActiveTab('exportar')} icon={<FileDown className="w-4 h-4"/>}>Exportar</NavButton>
+              <NavButton active={activeTab === 'exportar'} onClick={() => setActiveTab('exportar')} icon={<Download className="w-4 h-4"/>}>Exportar</NavButton>
             </div>
           </div>
 
@@ -404,7 +403,7 @@ export default function AdminDashboard() {
                        <CardTitle className="text-white font-black tracking-tight">Tendencia de Uso</CardTitle>
                        <CardDescription className="text-slate-500 text-xs">Cotizaciones diarias (Últimos 15 días)</CardDescription>
                     </div>
-                    <BarChart3 className="text-brand-mint w-5 h-5 opacity-50" />
+                    <BarChart className="text-brand-mint w-5 h-5 opacity-50" />
                  </CardHeader>
                  <CardContent className="h-64 pt-4">
                     <ResponsiveContainer width="100%" height="100%">
@@ -519,7 +518,7 @@ export default function AdminDashboard() {
                       {filteredHistory.length > 0 ? filteredHistory.map((row, idx) => (
                         <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
                           <td className="px-6 py-5">
-                            <p className="text-sm font-black text-white">{row.nombre_pacience || row.nombre_paciente}</p>
+                            <p className="text-sm font-black text-white">{row.nombre_paciente}</p>
                             <p className="text-[10px] font-bold text-slate-500 tracking-tighter uppercase">{row.documento_id}</p>
                           </td>
                           <td className="px-6 py-5">
@@ -565,7 +564,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                  <Card className="bg-[#121927] border-white/5 shadow-2xl p-6">
                     <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
-                       <PieChartIcon className="text-brand-mint w-5 h-5"/> Mix de Seguros
+                       <LucidePieChart className="text-brand-mint w-5 h-5"/> Mix de Seguros
                     </h3>
                     <div className="h-64">
                        <ResponsiveContainer width="100%" height="100%">
@@ -635,7 +634,7 @@ export default function AdminDashboard() {
                  <ExportCard 
                    title="Exportar Excel" 
                    desc="Formato nativo para análisis financiero." 
-                   icon={<FileDown className="w-8 h-8"/>} 
+                   icon={<Download className="w-8 h-8"/>} 
                    onClick={exportToExcel}
                    color="emerald"
                  />
