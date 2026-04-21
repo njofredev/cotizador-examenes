@@ -210,14 +210,19 @@ marimo/_lsp/
 __marimo__/
 
 
-# Custom ignores (Red dots in request)
+# Custom ignores
+scratch/
+venv/
+venv_312/
+venv_new/
+venv_314/
+.gemini/
 .streamlit/secrets.toml
 database.py
 db_report.md
 diag_db.py
 firma_dr.png
 inspect_db.py
-# main*.py  <-- Comentado para permitir el despliegue del backend
 pack_utf8.txt
 test*.py
 *.pdf

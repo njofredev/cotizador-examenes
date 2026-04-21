@@ -39,7 +39,7 @@ class PDF(FPDF):
         self.cell(0, 4, f"Página {pagina_relativa} de {total_relativo}", ln=1, align='R')
         self.ln(5)
 
-def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc_id, fecha_nac, prevision, df_sel, t_f, t_c, t_pg, t_pp, pack_nombre=None, incluir_om=False, output_dir=None):
+def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc_id, fecha_nac, prevision, df_sel, t_f, t_c, t_pg, t_pp, pack_nombre=None, incluir_om=False, es_publico=False, output_dir=None):
     
     def renderizar_contenido(pdf_obj, fase_conteo=False):
         """Función interna para renderizar el contenido. Se llama dos veces."""
@@ -57,13 +57,18 @@ def generar_cotizacion_pdf(folio_cot, folio_om, timestamp_emision, nombre_p, doc
         pdf_obj.cell(0, 5, "DATOS DEL PACIENTE:", ln=1)
         pdf_obj.set_font("Arial", '', 9)
         
-        # Fila 1: Nombre y Documento
-        pdf_obj.cell(100, 5, f"Nombre: {nombre_p}", 0, 0)
-        pdf_obj.cell(90, 5, f"Documento: {doc_id}", 0, 1)
-        
-        # Fila 2: Edad y Previsión
-        pdf_obj.cell(100, 5, f"Edad: {calcular_edad(fecha_nac)} años", 0, 0)
-        pdf_obj.cell(90, 5, f"Previsión: {prevision}", 0, 1)
+        if es_publico:
+            # Versión Pública: Solo Nombre y Previsión en una fila
+            pdf_obj.cell(100, 5, f"Nombre: {nombre_p}", 0, 0)
+            pdf_obj.cell(90, 5, f"Previsión: {prevision}", 0, 1)
+        else:
+            # Versión Estándar: Fila 1: Nombre y Documento
+            pdf_obj.cell(100, 5, f"Nombre: {nombre_p}", 0, 0)
+            pdf_obj.cell(90, 5, f"Documento: {doc_id}", 0, 1)
+            
+            # Fila 2: Edad y Previsión
+            pdf_obj.cell(100, 5, f"Edad: {calcular_edad(fecha_nac)} años", 0, 0)
+            pdf_obj.cell(90, 5, f"Previsión: {prevision}", 0, 1)
         
         if pack_nombre:
             pdf_obj.set_text_color(100, 100, 100)

@@ -45,6 +45,7 @@ class CotizacionRequest(BaseModel):
     tipo_documento: str
     documento_id: str
     prevision: str
+    es_publico: Optional[bool] = False
     pack_activo: Optional[str] = None
     examenes: List[CotizacionExamen]
 

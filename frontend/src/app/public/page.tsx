@@ -165,6 +165,7 @@ export default function GuestPage() {
         tipo_documento: 'Genérico',
         documento_id: GUEST_DATA.docId,
         prevision: prevision,
+        es_publico: true,
         pack_activo: packActivo,
         examenes: selectedExams.map(i => ({
           codigo: i.examen.codigo,

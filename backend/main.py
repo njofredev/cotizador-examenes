@@ -125,12 +125,17 @@ def post_cotizar(request: CotizacionRequest, db: Session = Depends(get_db)):
         df_sel = pd.DataFrame(examenes_list)
 
         # Generar PDF usando el generador histórico con los totales CORRECTOS
+        incluir_om = (request.pack_activo is not None)
+        if request.es_publico:
+            incluir_om = False
+            
         pdf_path = generar_cotizacion_pdf(
             folio_cot, folio_om, ahora.strftime("%d/%m/%Y %H:%M:%S"),
             request.nombre_paciente, request.documento_id, 
             f_nac_dt, request.prevision,
             df_sel, int(t_f), int(t_c), int(t_pg), int(t_pp),
-            pack_nombre=request.pack_activo, incluir_om=(request.pack_activo is not None),
+            pack_nombre=request.pack_activo, incluir_om=incluir_om,
+            es_publico=request.es_publico,
             output_dir=PDF_OUTPUT_DIR
         )
         
